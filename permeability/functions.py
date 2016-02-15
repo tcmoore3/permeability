@@ -82,7 +82,7 @@ def acf(forces, funlen, dstart=10):
         origin += dstart
     return f1/ntraj
 
-def combine(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3):
+def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3):
     """Combine force autocorrelations to calculate the free energy profile
     
     Params
@@ -102,12 +102,27 @@ def combine(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3):
 
     Returns
     -------
-    forces : np.ndarray
+    z_windows : np.ndarray, shape=(n_windows,)
+        The values of the windows in z
+    time : np.ndarray, shape=(n_timepoints,)
+        The time values of the correlation functions
+    forces : np.ndarray, shape=(n_sweeps, n_windows)
         The forces from each window at each sweep
-    ifacfval : np.ndarray
-        The values of the integratd force autocorrelation functions
-    delG : np.ndarray
-        The calculated free energy profiles for each window at each sweep
+    dG : np.ndarray, shape(n_sweeps, n_windows)
+        The free energy profile from each sweep
+    int_facf_win : np.ndarray, shape=(n_windows/2, n_timepoints)
+        The values of the integrated autocorrelation functions over time,
+        from each window
+    dG_mean : np.ndarray, shape=(n_windows,)
+        The averaged free energy profiles from all sweeps
+    dG_stderr : np.ndarray, shape=(n_windows,)
+        The standard error of the free energies at each window
+    diffusion_coefficient : np.ndarray, shape=(n_windows,)
+        The mean diffusion coefficients from each window
+    dG_sym : np.ndarray, shape=(n_windows,)
+        The symmetrized average free energy profile
+    int_F_acf_vals : np.ndarray
+        The integrals of the force autocorrelation functions
 
     This works under the assumption that the data for each sweep is listed in
     path/SweepN, where N is the sweep number.
@@ -115,53 +130,51 @@ def combine(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3):
     Othwerswise, you can pass a number of sweeps to anaylyze, which can be 
     useful for quick testing.
     """
-    RT2 = (kB*T)**2  # kcal/mol
-    RT2 *= 1e5*1e-4  # 10e5 cm2/s
-    # get values of the z-windows, calculate window spacing
-    z_windows = np.loadtxt(os.path.join(path, 'Sweep0', 'y0list.txt'))
-    n_windows = z_windows.shape[0]
-    dz = z_windows[2]-z_windows[1]
-    n_win_half = int(np.ceil(float(n_windows)/2))
-    if n_sweeps is None:
-        import glob
-        sweep_dirs = natsort.natsorted(glob.glob(os.path.join(path, 'Sweep*')))
-        n_sweeps = len(sweep_dirs)
-    # use first sweep to load the time
+    import glob
+    sweep_dirs = natsort.natsorted(glob.glob(os.path.join(path, 'Sweep*')))
     time = np.loadtxt(os.path.join(sweep_dirs[0], 'fcorr0.dat'))[:, 0]
-
+    z_windows = np.loadtxt(os.path.join(sweep_dirs[0], 'y0list.txt'))
+    n_windows = z_windows.shape[0]
+    n_win_half = int(np.ceil(float(n_windows)/2))
+    dz = z_windows[2]-z_windows[1]
+    RT2 = (kB*T)**2
+    RT2 *= 1e5*1e-4  # 10e5 cm2/s
     # arrays to hold the forces, integrated FACFs, and free energies from each
     # window and each sweep
-    forces = np.zeros((n_sweeps,n_windows))
-    ifacfval = np.zeros((n_sweeps,n_windows))
-    delG = np.zeros((n_sweeps,n_windows))
+    if n_sweeps is None:
+        n_sweeps = len(sweep_dirs)
+    forces = np.zeros((n_sweeps, n_windows))
+    int_F_acf_vals = np.zeros((n_sweeps, n_windows))
+    delG = np.zeros((n_sweeps, n_windows))
     int_facf_win = None
-    for sweep in range(n_sweeps): 
+    for sweep, sweep_dir in enumerate(sweep_dirs[:n_sweeps]): 
         int_Fs = []
+        if verbosity >=2:
+            print('window / window z-value / max int_F')
         for window in range(n_windows):
-            filename = os.path.join(
-                    path, 'Sweep{0}'.format(sweep), 'fcorr{0}.dat'.format(window))
+            filename = os.path.join(path, sweep_dir, 'fcorr{0}.dat'.format(window))
             int_F, int_F_val = integrate_forces_over_time(filename)
-            ifacfval[sweep, window] = int_F_val
+            int_F_acf_vals[sweep, window] = int_F_val
             int_Fs.append(int_F)
-            if int_facf_win is None: # make an int_facf_win for each sweep
+            if int_facf_win is None:
                 int_facf_win = np.zeros((n_win_half, int_F.shape[0]))
             forces[sweep, window] = np.loadtxt(
-                    os.path.join(path, 'Sweep{0}'.format(sweep), 
-                        'meanforce{0}.dat'.format(window)))
+                    os.path.join(path, sweep_dir, 'meanforce{0}.dat'.format(window)))
             if verbosity >= 2:
                 print(window, z_windows[window], max(int_F))
         for i, val in enumerate(int_facf_win):
             val += 0.5 * (int_Fs[i] + int_Fs[-i-1])
         if verbosity >= 1:
             print('End of sweep {0}'.format(sweep))
-        delG[sweep, :] = -4.184 * np.cumsum(forces[sweep,:]) * dz
+        dG[sweep, :] = -4.184 * np.cumsum(forces[sweep,:]) * dz
     int_facf_win /= n_sweeps
-    dG_mean = np.mean(delG, axis=0)
-    diffusion_coefficient = RT2 / np.mean(ifacfval, axis=0)
-    dGmeanSym = symmetrize(dG_mean) 
-    np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
-    return (z_windows, time, forces, delG, int_facf_win, dG_mean, 
-            diffusion_coefficient, dGmeanSym)
+    dG_mean = np.mean(dG, axis=0)
+    dG_stderr = np.std(dG, axis=0) / np.sqrt(n_sweeps)
+    diffusion_coefficient = RT2 / np.mean(int_F_acf_vals, axis=0)
+    dG_sym = symmetrize(dG_mean) 
+    #np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
+    return (z_windows, time, forces, dG, int_facf_win, dG_mean, dG_stderr,
+            diffusion_coefficient, dG_sym, int_F_acf_vals)
 
 def analyze_sweeps(path, n_sweeps=None, correlation_length=300000, 
         verbosity=0):
