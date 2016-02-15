@@ -124,7 +124,7 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3)
 
     This works under the assumption that the data for each sweep is listed in
     path/SweepN, where N is the sweep number.
-    If n_sweeps=None, then this function finds the number of sweeps.
+    If n_.sweeps=None, then this function finds the number of sweeps.
     Othwerswise, you can pass a number of sweeps to anaylyze, which can be 
     useful for quick testing.
     """
