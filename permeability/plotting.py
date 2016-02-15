@@ -123,7 +123,28 @@ def plot_diffusion_coefficient_z(z_windows, diffusion_coefficients,
 
 def plot_symmetrized_free_energy(z_windows, delta_G, z_units=u'\u00c5',
         energy_units=u'kcal-mol', fig_filename='delG-sym.pdf', grid=True):
-    """Plot symmetrized delta G"""
+    """Plot symmetrized delta G
+    
+    Params
+    ------
+    z_windows : np.ndarray, shape=(n,)
+        The location of the windows in z
+    delta_G : np.ndarray, shape=(n,)
+        The symmetrized free energy profile, in energy units
+    z_units : str
+        The units of the z-values in z_windows
+    energy_units : str
+        The units of delta_G
+    fig_filename : str
+        The name of the figure file to write
+    grid : bool
+        Draw gridlines on major ticks if True
+
+    Returns
+    -------
+    None. This figure draws a figure of the symmetrized free energy profile
+    and saves it to disk.
+    """
     fig, ax = plt.subplots()
     ax.plot(z_windows, delta_G)
     ax.set_xlabel(u'z, {0}'.format(z_units))
