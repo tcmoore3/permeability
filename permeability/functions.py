@@ -44,12 +44,30 @@ def symmetrize(data):
     -------
     dataSym : np.ndarray, shape=(n,)
         symmetrized data
+    dataSym_err : np.ndarray, shape=(n,)
+        error estimate in symmetrized data
     """
+    
+    n_windows = data.shape[0]
+    n_win_half = int(np.ceil(float(n_windows)/2))
+
     dataSym = np.zeros_like(data)
-    for i, point in enumerate(data):
-        dataSym[i] = (point + data[-(i+1)])/2        
+    dataSym_err = np.zeros_like(data)
+    for i in range(n_win_half):
+        left = data[i]
+        right = data[-(i+1)]
+        val = (left + right)/2
+        err = np.std([left, right-data[-1]])/np.sqrt(2)
+        
+        dataSym[i], dataSym_err[i] = val, err       
+        dataSym[-(i+1)], dataSym_err[-(i+1)] = val, err        
     dataSym[:] -= dataSym[0]
-    return dataSym
+
+    #dataSym = np.zeros_like(data)
+    #for i, point in enumerate(data):
+    #    dataSym[i] = (point + data[-(i+1)])/2        
+    #dataSym[:] -= dataSym[0]
+    return dataSym, dataSym_err
 
 def acf(forces, funlen, dstart=10):
     """Calculate the autocorrelation of a function
@@ -123,6 +141,8 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
         The mean diffusion coefficients from each window
     dG_sym : np.ndarray, shape=(n_windows,)
         The symmetrized average free energy profile
+    dG_sym_err : np.ndarray, shape=(n_windows,)
+        The error estimate in the symmetrized average free energy profile
     int_F_acf_vals : np.ndarray
         The integrals of the force autocorrelation functions
 
@@ -174,10 +194,10 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
     dG_mean = np.mean(dG, axis=0)
     dG_stderr = np.std(dG, axis=0) / np.sqrt(n_sweeps)
     diffusion_coefficient = RT2 / np.mean(int_F_acf_vals, axis=0)
-    dG_sym = symmetrize(dG_mean) 
+    dG_sym, dG_sym_err = symmetrize(dG_mean) 
     #np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
     return (z_windows, time, forces, dG, int_facf_win, dG_mean, dG_stderr,
-            diffusion_coefficient, dG_sym, int_F_acf_vals)
+            diffusion_coefficient, dG_sym, dG_sym_err, int_F_acf_vals)
 
 def analyze_sweeps(path, n_sweeps=None, correlation_length=300000, 
         verbosity=0, directory_prefix='Sweep'):

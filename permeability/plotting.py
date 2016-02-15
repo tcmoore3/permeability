@@ -121,7 +121,7 @@ def plot_diffusion_coefficient_z(z_windows, diffusion_coefficients,
     fig.tight_layout()
     fig.savefig(fig_filename)
 
-def plot_symmetrized_free_energy(z_windows, delta_G, z_units=u'\u00c5',
+def plot_symmetrized_free_energy(z_windows, delta_G, delta_G_err, z_units=u'\u00c5',
         energy_units=u'kcal/mol', fig_filename='delG-sym.pdf', grid=True):
     """Plot symmetrized delta G
     
@@ -131,6 +131,8 @@ def plot_symmetrized_free_energy(z_windows, delta_G, z_units=u'\u00c5',
         The location of the windows in z
     delta_G : np.ndarray, shape=(n,)
         The symmetrized free energy profile, in energy units
+    delta_G_err : np.ndarray, shape=(n,)
+        The error in the symmetrized free energy profile, in energy units
     z_units : str
         The units of the z-values in z_windows
     energy_units : str
@@ -145,8 +147,12 @@ def plot_symmetrized_free_energy(z_windows, delta_G, z_units=u'\u00c5',
     None. This figure draws a figure of the symmetrized free energy profile
     and saves it to disk.
     """
+
     fig, ax = plt.subplots()
     ax.plot(z_windows, delta_G)
+    ax.fill_between(z_windows, delta_G+delta_G_err, 
+            delta_G-delta_G_err,
+            facecolor='#a8a8a8', edgecolor='#a8a8a8')
     ax.set_xlabel(u'z, {0}'.format(z_units))
     ax.set_ylabel(u'G(z), {0}'.format(energy_units))
     ax.grid(grid)
