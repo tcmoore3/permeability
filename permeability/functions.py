@@ -72,13 +72,11 @@ def acf(forces, funlen, dstart=10):
     ntraj = int(np.floor((forces.shape[0]-funlen)/dstart))
     meanfz = np.mean(forces)
     f1 = np.zeros((funlen))
-    f2 = np.zeros((funlen))
     origin = 0 
     for i in range(ntraj):
         dfzt = forces[origin:origin+funlen] - meanfz
         dfz0 = forces[origin] - meanfz;
         f1 += dfzt*dfz0
-        f2 += dfz0*dfz0
         origin += dstart
     return f1/ntraj
 
