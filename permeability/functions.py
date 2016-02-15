@@ -129,7 +129,7 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3)
     useful for quick testing.
     """
     import glob
-    sweep_dirs = natsort.natsorted(glob.glob(os.path.join(path, 'Sweep*')))
+    sweep_dirs = natsort.natsorted(glob.glob(os.path.join(path, 'Sweep*/')))
     time = np.loadtxt(os.path.join(sweep_dirs[0], 'fcorr0.dat'))[:, 0]
     z_windows = np.loadtxt(os.path.join(sweep_dirs[0], 'y0list.txt'))
     n_windows = z_windows.shape[0]
@@ -143,7 +143,7 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3)
         n_sweeps = len(sweep_dirs)
     forces = np.zeros((n_sweeps, n_windows))
     int_F_acf_vals = np.zeros((n_sweeps, n_windows))
-    delG = np.zeros((n_sweeps, n_windows))
+    dG = np.zeros((n_sweeps, n_windows))
     int_facf_win = None
     for sweep, sweep_dir in enumerate(sweep_dirs[:n_sweeps]): 
         int_Fs = []
@@ -193,7 +193,7 @@ def analyze_sweeps(path, n_sweeps=None, correlation_length=300000,
     This function prints the meanforce and force ACF at each window from each sweep.
     """
     import glob
-    sweep_dirs = natsort.natsorted(glob.glob(os.path.join(path, 'Sweep*')))
+    sweep_dirs = natsort.natsorted(glob.glob(os.path.join(path, 'Sweep*/')))
     n_windows = np.loadtxt(os.path.join(sweep_dirs[0], 'y0list.txt')).shape[0]
     # loop over sweeps
     for sweep_dir in sweep_dirs[:n_sweeps]:

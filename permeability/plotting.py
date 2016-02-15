@@ -116,13 +116,13 @@ def plot_diffusion_coefficient_z(z_windows, diffusion_coefficients,
     fig, ax = plt.subplots()
     ax.plot(z_windows, diffusion_coefficients)
     ax.set_xlabel(u'z, {0}'.format(z_units))
-    ax.set_ylabel(u'D, {0}'.format(D_units))
+    ax.set_ylabel(u'D(z), {0}'.format(D_units))
     ax.grid(grid)
     fig.tight_layout()
     fig.savefig(fig_filename)
 
 def plot_symmetrized_free_energy(z_windows, delta_G, z_units=u'\u00c5',
-        energy_units=u'kcal-mol', fig_filename='delG-sym.pdf', grid=True):
+        energy_units=u'kcal/mol', fig_filename='delG-sym.pdf', grid=True):
     """Plot symmetrized delta G
     
     Params

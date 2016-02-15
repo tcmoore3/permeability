@@ -4,7 +4,7 @@ import cPickle as pickle
 
 
 data_dir = '/Users/tcmoore3/Desktop/sandbox/permeability/data'
-prm.analyze_sweeps(data_dir, verbosity=2)
+#prm.analyze_sweeps(data_dir, verbosity=2)
 output = prm.analyze_force_acf_data(data_dir, 305.0, verbosity=1)
 pickle.dump(output, open('output.p', 'wb'))
 #output = pickle.load(open('output.p', 'rb'))
