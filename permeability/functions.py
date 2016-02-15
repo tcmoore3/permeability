@@ -80,7 +80,8 @@ def acf(forces, funlen, dstart=10):
         origin += dstart
     return f1/ntraj
 
-def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3):
+def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
+        directory_prefix='Sweep'):
     """Combine force autocorrelations to calculate the free energy profile
     
     Params
@@ -97,6 +98,9 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3)
         Give more details with higher number. 0 - don't print any status
         1 - Print when finished with a sweep
         2 - Print each window of each sweep
+    directory_prefix : str, default = 'Sweep'
+        Prefix of directories in path that contain the force ACF data. E.g., if
+        the data is in sweep<N>, use directory_prefix='sweep'
 
     Returns
     -------
@@ -129,7 +133,8 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3)
     useful for quick testing.
     """
     import glob
-    sweep_dirs = natsort.natsorted(glob.glob(os.path.join(path, 'Sweep*/')))
+    sweep_dirs = natsort.natsorted(glob.glob(
+        os.path.join(path, '{0}*/'.format(directory_prefix))))
     time = np.loadtxt(os.path.join(sweep_dirs[0], 'fcorr0.dat'))[:, 0]
     z_windows = np.loadtxt(os.path.join(sweep_dirs[0], 'y0list.txt'))
     n_windows = z_windows.shape[0]
@@ -175,7 +180,7 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3)
             diffusion_coefficient, dG_sym, int_F_acf_vals)
 
 def analyze_sweeps(path, n_sweeps=None, correlation_length=300000, 
-        verbosity=0):
+        verbosity=0, directory_prefix='Sweep'):
     """Analyze the force data to calculate the force ACFs and mean force 
     at each window for each sweep
 
@@ -187,13 +192,18 @@ def analyze_sweeps(path, n_sweeps=None, correlation_length=300000,
         The number of sweeps to analyze
     verbosity : int
         Level of detail to print
+    directory_prefix : str, default = 'Sweep'
+        Prefix of directories in path that contain the force ACF data. E.g., if
+        the data is in sweep<N>, use directory_prefix='sweep'
 
     Returns
     -------
-    This function prints the meanforce and force ACF at each window from each sweep.
+    This function prints the meanforce and force ACF at each window from each 
+    sweep.
     """
     import glob
-    sweep_dirs = natsort.natsorted(glob.glob(os.path.join(path, 'Sweep*/')))
+    sweep_dirs = natsort.natsorted(glob.glob(os.path.join(
+        path, '{0}*/'.format(directory_prefix))))
     n_windows = np.loadtxt(os.path.join(sweep_dirs[0], 'y0list.txt')).shape[0]
     # loop over sweeps
     for sweep_dir in sweep_dirs[:n_sweeps]:
