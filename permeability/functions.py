@@ -46,27 +46,21 @@ def symmetrize(data):
         symmetrized data
     dataSym_err : np.ndarray, shape=(n,)
         error estimate in symmetrized data
+
+    This function symmetrizes a 1D array. It also provides an error estimate
+    for each value, taken as the standard error between the "left" and "right"
+    values.
     """
-    
     n_windows = data.shape[0]
     n_win_half = int(np.ceil(float(n_windows)/2))
-
     dataSym = np.zeros_like(data)
     dataSym_err = np.zeros_like(data)
-    for i in range(n_win_half):
-        left = data[i]
-        right = data[-(i+1)]
-        val = (left + right)/2
-        err = np.std([left, right-data[-1]])/np.sqrt(2)
-        
-        dataSym[i], dataSym_err[i] = val, err       
+    for i, sym_val in enumerate(dataSym):
+        val = 0.5*(data[i] + data[-(i+1)])
+        err = np.std([data[i], data[-(i+1)]-data[-1]]) / np.sqrt(2)
+        sym_val, dataSym_err[i] = val, err
         dataSym[-(i+1)], dataSym_err[-(i+1)] = val, err        
     dataSym[:] -= dataSym[0]
-
-    #dataSym = np.zeros_like(data)
-    #for i, point in enumerate(data):
-    #    dataSym[i] = (point + data[-(i+1)])/2        
-    #dataSym[:] -= dataSym[0]
     return dataSym, dataSym_err
 
 def acf(forces, funlen, dstart=10):
