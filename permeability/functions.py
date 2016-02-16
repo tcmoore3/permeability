@@ -32,13 +32,15 @@ def integrate_acf_over_time(filename, average_fraction=0.1):
     intFval = np.mean(intF[-lastbit:])
     return intF, intFval 
 
-def symmetrize(data):
+def symmetrize(data, zero_boundary_condition=False):
     """Symmetrize a profile
     
     Params
     ------
     data : np.ndarray, shape=(n,)
         data to be symmetrized
+    zero_boundary_condition : bool, default=False
+        If True, shift the right half of the curve before symmetrizing
 
     Returns
     -------
@@ -49,18 +51,21 @@ def symmetrize(data):
 
     This function symmetrizes a 1D array. It also provides an error estimate
     for each value, taken as the standard error between the "left" and "right"
-    values.
+    values. The zero_boundary_condition shifts the "right" half of the curve 
+    such that the final value goes to 0. This should be used if the data is 
+    expected to approach zero, e.g., in the case of pulling a water molecule 
+    through one phase into bulk water.
     """
     n_windows = data.shape[0]
     n_win_half = int(np.ceil(float(n_windows)/2))
     dataSym = np.zeros_like(data)
     dataSym_err = np.zeros_like(data)
+    shift = {True: data[-1], False: 0.0}
     for i, sym_val in enumerate(dataSym[:n_win_half]):
-        val = 0.5*(data[i] + data[-(i+1)])
-        err = np.std([data[i], data[-(i+1)]-data[-1]]) / np.sqrt(2)
+        val = 0.5 * (data[i] + data[-(i+1)])
+        err = np.std([data[i], data[-(i+1)] - shift[zero_boundary_condition]]) / np.sqrt(2)
         dataSym[i], dataSym_err[i] = val, err
         dataSym[-(i+1)], dataSym_err[-(i+1)] = val, err        
-    #dataSym[:] -= dataSym[0]
     return dataSym, dataSym_err
 
 def acf(forces, funlen, dstart=10):
@@ -93,7 +98,6 @@ def acf(forces, funlen, dstart=10):
     return f1/ntraj
 
 def resistance(delG, diff_coeff, T, kB):
-
     """Calculate the resistant profile of the sweep-averaged data 
         Error estimates need to be added
 
@@ -203,14 +207,14 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
         if verbosity >=2:
             print('window / window z-value / max int_F')
         for window in range(n_windows):
-            filename = os.path.join(path, sweep_dir, 'fcorr{0}.dat'.format(window))
+            filename = os.path.join(sweep_dir, 'fcorr{0}.dat'.format(window))
             int_F, int_F_val = integrate_acf_over_time(filename)
             int_F_acf_vals[sweep, window] = int_F_val
             int_Fs.append(int_F)
             if int_facf_win is None:
                 int_facf_win = np.zeros((n_win_half, int_F.shape[0]))
             forces[sweep, window] = np.loadtxt(
-                    os.path.join(path, sweep_dir, 'meanforce{0}.dat'.format(window)))
+                    os.path.join(sweep_dir, 'meanforce{0}.dat'.format(window)))
             if verbosity >= 2:
                 print(window, z_windows[window], max(int_F))
         for i, val in enumerate(int_facf_win):
@@ -223,7 +227,7 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
     dG_stderr = np.std(dG, axis=0) / np.sqrt(n_sweeps)
     diffusion_coeff = RT2 / np.mean(int_F_acf_vals, axis=0)
     diffusion_coeff_err = np.std(RT2 / int_F_acf_vals, axis=0) / np.sqrt(n_sweeps)
-    dG_sym, dG_sym_err = symmetrize(dG_mean) 
+    dG_sym, dG_sym_err = symmetrize(dG_mean, zero_boundary_condition=True) 
     dG_sym -= dG_sym[0] # since the integration (over the forces) starts at 0 
     diff_coeff_sym, diff_coeff_sym_err = symmetrize(diffusion_coeff) 
     resist = resistance(dG_sym, diff_coeff_sym, T, kB)
