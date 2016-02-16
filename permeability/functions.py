@@ -1,8 +1,28 @@
-import numpy as np
 import os
-#import ipdb
-import natsort
 
+import natsort
+import numpy as np
+
+
+def perm_coeff(z, resist):
+    """Calculate the overall permeability
+    
+    Params
+    ------
+    z : np.ndarray, shape=(n_windows,)
+        The position of each window
+    resist : np.ndarray, shape=(n_windows,)
+        The resistance in each window
+
+    Returns
+    -------
+    P : int
+        Overall permeability of the bilayer
+    """
+    P = 1 / (np.sum(resist) * (z[1] - z[0]))
+    print('Overall permeability: {P:.3e} [cm/s]?'.format(**locals()))
+
+    return P
 
 def integrate_acf_over_time(filename, average_fraction=0.1):
     """Open a text file, integrate the forces
@@ -222,7 +242,7 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
             val += 0.5 * (int_Fs[i] + int_Fs[-i-1])
         if verbosity >= 1:
             print('End of sweep {0}'.format(sweep))
-        dG[sweep, :] = -4.184 * np.cumsum(forces[sweep,:]) * dz
+        dG[sweep, :] = - np.cumsum(forces[sweep,:]) * dz
     int_facf_win /= n_sweeps
     dG_mean = np.mean(dG, axis=0)
     dG_stderr = np.std(dG, axis=0) / np.sqrt(n_sweeps)
@@ -232,6 +252,7 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
     dG_sym -= dG_sym[0] # since the integration (over the forces) starts at 0 
     diff_coeff_sym, diff_coeff_sym_err = symmetrize(diffusion_coeff) 
     resist = resistance(dG_sym, diff_coeff_sym, T, kB)
+    P = perm_coeff(z_windows,resist)
     #np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
     return {'z': z_windows, 'time': time, 'forces': forces, 'dG': dG,
             'int_facf_windows': int_facf_win, 'dG_mean': dG_mean, 
@@ -239,7 +260,7 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
             'd_z_err': diffusion_coeff_err, 'dG_sym': dG_sym, 
             'dG_sym_err': dG_sym_err, 'd_z_sym': diff_coeff_sym,
             'd_z_sym_err': diff_coeff_sym_err, 'R_z': resist,
-            'int_F_acf_vals': int_F_acf_vals}
+            'int_F_acf_vals': int_F_acf_vals, 'permeability': P}
 
 def analyze_sweeps(path, n_sweeps=None, correlation_length=300000, 
         verbosity=0, directory_prefix='Sweep'):
@@ -280,7 +301,7 @@ def analyze_sweeps(path, n_sweeps=None, correlation_length=300000,
                     window, np.mean(data[:, 1]), data.shape[0], dstep))
             funlen = int(correlation_length/dstep)
             FACF = acf(data[:, 1], funlen)
-            time = np.arange(0, funlen*dstep/1000, dstep/1000)  # WHY 1000?
+            time = np.arange(0, funlen*dstep/1000, dstep/1000)  # Convert fs to ps?
             np.savetxt(os.path.join(sweep_dir, 'fcorr{0}.dat'.format(window)),
                     np.vstack((time, FACF)).T, fmt='%.4f')
             np.savetxt(os.path.join(sweep_dir, 'meanforce{0}.dat'.format(window)),
