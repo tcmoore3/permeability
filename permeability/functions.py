@@ -146,37 +146,38 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
 
     Returns
     -------
-    z_windows : np.ndarray, shape=(n_windows,)
-        The values of the windows in z
-    time : np.ndarray, shape=(n_timepoints,)
-        The time values of the correlation functions
-    forces : np.ndarray, shape=(n_sweeps, n_windows)
-        The forces from each window at each sweep
-    dG : np.ndarray, shape(n_sweeps, n_windows)
-        The free energy profile from each sweep
-    int_facf_win : np.ndarray, shape=(n_windows/2, n_timepoints)
-        The values of the integrated autocorrelation functions over time,
-        from each window
-    dG_mean : np.ndarray, shape=(n_windows,)
-        The averaged free energy profiles from all sweeps
-    dG_stderr : np.ndarray, shape=(n_windows,)
-        The standard error of the free energies at each window
-    diffusion_coeff : np.ndarray, shape=(n_windows,)
-        The mean diffusion coefficients from each window
-    diffusion_coeff_err : np.ndarray, shape=(n_windows,)
-        The error estimate on the diffusion coefficients from each window
-    dG_sym : np.ndarray, shape=(n_windows,)
-        The symmetrized average free energy profile
-    dG_sym_err : np.ndarray, shape=(n_windows,)
-        The error estimate in the symmetrized average free energy profile
-    diff_coeff_sym : np.ndarray, shape=(n_windows,)
-        The mean diffusion coefficients from each window
-    diff_coeff_sym_err : np.ndarray, shape=(n_windows,)
-        The error estimate on the diffusion coefficients from each window
-    resist : np.ndarray, shape=(n_windows,)
-        Resistance in each window
-    int_F_acf_vals : np.ndarray
-        The integrals of the force autocorrelation functions
+    A dict containing the following values: 
+        z : np.ndarray, shape=(n_windows,)
+            The values of the windows in z
+        time : np.ndarray, shape=(n_timepoints,)
+            The time values of the correlation functions
+        forces : np.ndarray, shape=(n_sweeps, n_windows)
+            The forces from each window at each sweep
+        dG : np.ndarray, shape(n_sweeps, n_windows)
+            The free energy profile from each sweep
+        int_facf_windows : np.ndarray, shape=(n_windows/2, n_timepoints)
+            The values of the integrated autocorrelation functions over time,
+            from each window
+        dG_mean : np.ndarray, shape=(n_windows,)
+            The averaged free energy profiles from all sweeps
+        dG_stderr : np.ndarray, shape=(n_windows,)
+            The standard error of the free energies at each window
+        d_z : np.ndarray, shape=(n_windows,)
+            The mean diffusion coefficients from each window
+        d_z_err : np.ndarray, shape=(n_windows,)
+            The error estimate on the diffusion coefficients from each window
+        dG_sym : np.ndarray, shape=(n_windows,)
+            The symmetrized average free energy profile
+        dG_sym_err : np.ndarray, shape=(n_windows,)
+            The error estimate in the symmetrized average free energy profile
+        diff_z_sym : np.ndarray, shape=(n_windows,)
+            The mean diffusion coefficients from each window
+        diff_z_sym_err : np.ndarray, shape=(n_windows,)
+            The error estimate on the diffusion coefficients from each window
+        R_z : np.ndarray, shape=(n_windows,)
+            Resistance in each window
+        int_F_acf_vals : np.ndarray
+            The integrals of the force autocorrelation functions
 
     This works under the assumption that the data for each sweep is listed in
     path/SweepN, where N is the sweep number.
@@ -232,9 +233,13 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
     diff_coeff_sym, diff_coeff_sym_err = symmetrize(diffusion_coeff) 
     resist = resistance(dG_sym, diff_coeff_sym, T, kB)
     #np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
-    return (z_windows, time, forces, dG, int_facf_win, dG_mean, dG_stderr,
-            diffusion_coeff, diffusion_coeff_err, dG_sym, dG_sym_err, diff_coeff_sym, 
-            diff_coeff_sym_err, resist, int_F_acf_vals)
+    return {'z': z_windows, 'time': time, 'forces': forces, 'dG': dG,
+            'int_facf_windows': int_facf_win, 'dG_mean': dG_mean, 
+            'dG_stderr': dG_stderr, 'd_z': diffusion_coeff, 
+            'd_z_err': diffusion_coeff_err, 'dG_sym': dG_sym, 
+            'dG_sym_err': dG_sym_err, 'd_z_sym': diff_coeff_sym,
+            'd_z_sym_err': diff_coeff_sym_err, 'R_z': resist,
+            'int_F_acf_vals': int_F_acf_vals}
 
 def analyze_sweeps(path, n_sweeps=None, correlation_length=300000, 
         verbosity=0, directory_prefix='Sweep'):
