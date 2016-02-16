@@ -131,8 +131,10 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
         The averaged free energy profiles from all sweeps
     dG_stderr : np.ndarray, shape=(n_windows,)
         The standard error of the free energies at each window
-    diffusion_coefficient : np.ndarray, shape=(n_windows,)
+    diffusion_coeff : np.ndarray, shape=(n_windows,)
         The mean diffusion coefficients from each window
+    diffusion_coeff_err : np.ndarray, shape=(n_windows,)
+        The error estimate on the diffusion coefficients from each window
     dG_sym : np.ndarray, shape=(n_windows,)
         The symmetrized average free energy profile
     dG_sym_err : np.ndarray, shape=(n_windows,)
@@ -187,11 +189,12 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
     int_facf_win /= n_sweeps
     dG_mean = np.mean(dG, axis=0)
     dG_stderr = np.std(dG, axis=0) / np.sqrt(n_sweeps)
-    diffusion_coefficient = RT2 / np.mean(int_F_acf_vals, axis=0)
+    diffusion_coeff = RT2 / np.mean(int_F_acf_vals, axis=0)
+    diffusion_coeff_err = np.std(RT2 / int_F_acf_vals, axis=0) / np.sqrt(n_sweeps)
     dG_sym, dG_sym_err = symmetrize(dG_mean) 
     #np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
     return (z_windows, time, forces, dG, int_facf_win, dG_mean, dG_stderr,
-            diffusion_coefficient, dG_sym, dG_sym_err, int_F_acf_vals)
+            diffusion_coeff, diffusion_coeff_err, dG_sym, dG_sym_err, int_F_acf_vals)
 
 def analyze_sweeps(path, n_sweeps=None, correlation_length=300000, 
         verbosity=0, directory_prefix='Sweep'):
