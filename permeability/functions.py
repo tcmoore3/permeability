@@ -226,7 +226,7 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
     dG_mean = np.mean(dG, axis=0)
     dG_stderr = np.std(dG, axis=0) / np.sqrt(n_sweeps)
     diffusion_coeff = RT2 / np.mean(int_F_acf_vals, axis=0)
-    diffusion_coeff_err = np.std(RT2 / int_F_acf_vals, axis=0) / np.sqrt(n_sweeps)
+    diffusion_coeff_err = np.std(RT2 * int_F_acf_vals, axis=0) / np.sqrt(n_sweeps)
     dG_sym, dG_sym_err = symmetrize(dG_mean, zero_boundary_condition=True) 
     dG_sym -= dG_sym[0] # since the integration (over the forces) starts at 0 
     diff_coeff_sym, diff_coeff_sym_err = symmetrize(diffusion_coeff) 
