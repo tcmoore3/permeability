@@ -4,7 +4,7 @@ import os
 import natsort
 
 
-def integrate_forces_over_time(filename, average_fraction=0.1):
+def integrate_acf_over_time(filename, average_fraction=0.1):
     """Open a text file, integrate the forces
 
     Params
@@ -55,10 +55,10 @@ def symmetrize(data):
     n_win_half = int(np.ceil(float(n_windows)/2))
     dataSym = np.zeros_like(data)
     dataSym_err = np.zeros_like(data)
-    for i, sym_val in enumerate(dataSym):
+    for i, sym_val in enumerate(dataSym[:n_win_half]):
         val = 0.5*(data[i] + data[-(i+1)])
         err = np.std([data[i], data[-(i+1)]-data[-1]]) / np.sqrt(2)
-        sym_val, dataSym_err[i] = val, err
+        dataSym[i], dataSym_err[i] = val, err
         dataSym[-(i+1)], dataSym_err[-(i+1)] = val, err        
     dataSym[:] -= dataSym[0]
     return dataSym, dataSym_err
@@ -170,7 +170,7 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
             print('window / window z-value / max int_F')
         for window in range(n_windows):
             filename = os.path.join(path, sweep_dir, 'fcorr{0}.dat'.format(window))
-            int_F, int_F_val = integrate_forces_over_time(filename)
+            int_F, int_F_val = integrate_acf_over_time(filename)
             int_F_acf_vals[sweep, window] = int_F_val
             int_Fs.append(int_F)
             if int_facf_win is None:
