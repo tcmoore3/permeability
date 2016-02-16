@@ -124,6 +124,22 @@ def plot_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff_err
     fig.tight_layout()
     fig.savefig(fig_filename)
 
+def plot_sym_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff_err, 
+        z_units=u'\u00c5', D_units=u'1E5 cm\u00b2/s', fig_filename='d-sym_z.pdf',
+        grid=True):
+    """Plot the diffusion coefficient as a function of z-position.
+    """
+    fig, ax = plt.subplots()
+    ax.plot(z_windows, diffusion_coeff)
+    ax.fill_between(z_windows, diffusion_coeff+diffusion_coeff_err, 
+            diffusion_coeff-diffusion_coeff_err,
+            facecolor='#a8a8a8', edgecolor='#a8a8a8')
+    ax.set_xlabel(u'z, {0}'.format(z_units))
+    ax.set_ylabel(u'D(z), {0}'.format(D_units))
+    ax.grid(grid)
+    fig.tight_layout()
+    fig.savefig(fig_filename)
+
 def plot_symmetrized_free_energy(z_windows, delta_G, delta_G_err, z_units=u'\u00c5',
         energy_units=u'kcal/mol', fig_filename='delG-sym.pdf', grid=True):
     """Plot symmetrized delta G

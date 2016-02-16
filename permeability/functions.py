@@ -60,7 +60,7 @@ def symmetrize(data):
         err = np.std([data[i], data[-(i+1)]-data[-1]]) / np.sqrt(2)
         dataSym[i], dataSym_err[i] = val, err
         dataSym[-(i+1)], dataSym_err[-(i+1)] = val, err        
-    dataSym[:] -= dataSym[0]
+    #dataSym[:] -= dataSym[0]
     return dataSym, dataSym_err
 
 def acf(forces, funlen, dstart=10):
@@ -139,6 +139,10 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
         The symmetrized average free energy profile
     dG_sym_err : np.ndarray, shape=(n_windows,)
         The error estimate in the symmetrized average free energy profile
+    diff_coeff_sym : np.ndarray, shape=(n_windows,)
+        The mean diffusion coefficients from each window
+    diff_coeff_sym_err : np.ndarray, shape=(n_windows,)
+        The error estimate on the diffusion coefficients from each window
     int_F_acf_vals : np.ndarray
         The integrals of the force autocorrelation functions
 
@@ -192,9 +196,12 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
     diffusion_coeff = RT2 / np.mean(int_F_acf_vals, axis=0)
     diffusion_coeff_err = np.std(RT2 / int_F_acf_vals, axis=0) / np.sqrt(n_sweeps)
     dG_sym, dG_sym_err = symmetrize(dG_mean) 
+    dG_sym -= dG_sym[0] # since the integration (over the forces) starts at 0 
+    diff_coeff_sym, diff_coeff_sym_err = symmetrize(diffusion_coeff) 
     #np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
     return (z_windows, time, forces, dG, int_facf_win, dG_mean, dG_stderr,
-            diffusion_coeff, diffusion_coeff_err, dG_sym, dG_sym_err, int_F_acf_vals)
+            diffusion_coeff, diffusion_coeff_err, dG_sym, dG_sym_err, diff_coeff_sym, 
+            diff_coeff_sym_err, int_F_acf_vals)
 
 def analyze_sweeps(path, n_sweeps=None, correlation_length=300000, 
         verbosity=0, directory_prefix='Sweep'):
