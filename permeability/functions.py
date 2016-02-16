@@ -214,7 +214,7 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
     n_win_half = int(np.ceil(float(n_windows)/2))
     dz = z_windows[2]-z_windows[1]
     RT2 = (kB*T)**2
-    RT2 *= 1e5*1e-4  # 10e5 cm2/s
+    RT2 *= 1e-4  # convert from \AA2/ps to cm2/s
     # arrays to hold the forces, integrated FACFs, and free energies from each
     # window and each sweep
     if n_sweeps is None:

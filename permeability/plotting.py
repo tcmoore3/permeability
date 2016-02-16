@@ -109,14 +109,14 @@ def plot_force_acfs_time(time, int_facfs, time_units='ps', grid=True,
     fig.savefig(fig_filename)
 
 def plot_resistance_z(z_windows, resist, 
-        z_units=u'\u00c5', Res_units=u'1E-19 s/cm\u00b2', fig_filename='res_z.pdf',
+        z_units=u'\u00c5', Res_units=u's/cm\u00b2', fig_filename='res_z.pdf',
         grid=True):
     """Plot the diffusion coefficient as a function of z-position.
         Resistant input is in 1e-5 s/cm2
 
     """
     fig, ax = plt.subplots()
-    ax.plot(z_windows, 1e-14*resist)
+    ax.plot(z_windows, resist)
     #ax.fill_between(z_windows, resist+resist_err, 
     #        resist-resist_err,
     #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
@@ -127,7 +127,7 @@ def plot_resistance_z(z_windows, resist,
     fig.savefig(fig_filename)
 
 def plot_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff_err, 
-        z_units=u'\u00c5', D_units=u'1E5 cm\u00b2/s', fig_filename='d_z.pdf',
+        z_units=u'\u00c5', D_units=u'cm\u00b2/s', fig_filename='d_z.pdf',
         grid=True):
     """Plot the diffusion coefficient as a function of z-position.
     """
@@ -143,7 +143,7 @@ def plot_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff_err
     fig.savefig(fig_filename)
 
 def plot_sym_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff_err, 
-        z_units=u'\u00c5', D_units=u'1E5 cm\u00b2/s', fig_filename='d-sym_z.pdf',
+        z_units=u'\u00c5', D_units=u'cm\u00b2/s', fig_filename='d-sym_z.pdf',
         grid=True):
     """Plot the diffusion coefficient as a function of z-position.
     """
@@ -225,8 +225,8 @@ def plot_sym_exp_free_energy(z_windows, delta_G, delta_G_err, diff_sym, T, kB=1.
     """
 
     fig, ax = plt.subplots()
-    ax.plot(z_windows, (kB*T*delta_G))
-    #ax.plot(z_windows, 1e5/diff_sym)
+    ax.plot(z_windows, np.exp(kB*T*delta_G)) # dimensionless
+    ax.plot(z_windows, 1e5/diff_sym) # s/cm2 
     err = np.exp(delta_G) * delta_G_err
     val = np.exp(delta_G)
     #ax.fill_between(z_windows, np.exp(delta_G), 
