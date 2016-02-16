@@ -92,6 +92,32 @@ def acf(forces, funlen, dstart=10):
         origin += dstart
     return f1/ntraj
 
+def resistance(delG, diff_coeff, T, kB):
+
+    """Calculate the resistant profile of the sweep-averaged data 
+        Error estimates need to be added
+
+    Params
+    ------
+    delG : np.ndarray, shape=(n_windows,)
+        Excess free energy profile
+    diff_coeff : np.ndarray, shape=(n_windows,)
+        Diffusion coefficient profile
+    T : float
+        The absolute temperature
+    kB : float
+        Boltzmann constant, determines units (default is kcal/mol-K)
+    
+    Returns
+    -------
+    resist : np.ndarray, shape=(n_windows,)
+    """
+
+    resist = np.exp(kB*T*delG)/diff_coeff 
+
+    return resist
+    
+
 def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
         directory_prefix='Sweep'):
     """Combine force autocorrelations to calculate the free energy profile
@@ -143,6 +169,8 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
         The mean diffusion coefficients from each window
     diff_coeff_sym_err : np.ndarray, shape=(n_windows,)
         The error estimate on the diffusion coefficients from each window
+    resist : np.ndarray, shape=(n_windows,)
+        Resistance in each window
     int_F_acf_vals : np.ndarray
         The integrals of the force autocorrelation functions
 
@@ -198,10 +226,11 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
     dG_sym, dG_sym_err = symmetrize(dG_mean) 
     dG_sym -= dG_sym[0] # since the integration (over the forces) starts at 0 
     diff_coeff_sym, diff_coeff_sym_err = symmetrize(diffusion_coeff) 
+    resist = resistance(dG_sym, diff_coeff_sym, T, kB)
     #np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
     return (z_windows, time, forces, dG, int_facf_win, dG_mean, dG_stderr,
             diffusion_coeff, diffusion_coeff_err, dG_sym, dG_sym_err, diff_coeff_sym, 
-            diff_coeff_sym_err, int_F_acf_vals)
+            diff_coeff_sym_err, resist, int_F_acf_vals)
 
 def analyze_sweeps(path, n_sweeps=None, correlation_length=300000, 
         verbosity=0, directory_prefix='Sweep'):

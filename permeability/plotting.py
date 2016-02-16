@@ -108,6 +108,24 @@ def plot_force_acfs_time(time, int_facfs, time_units='ps', grid=True,
     fig.tight_layout()
     fig.savefig(fig_filename)
 
+def plot_resistance_z(z_windows, resist, 
+        z_units=u'\u00c5', Res_units=u'1E-19 s/cm\u00b2', fig_filename='res_z.pdf',
+        grid=True):
+    """Plot the diffusion coefficient as a function of z-position.
+        Resistant input is in 1e-5 s/cm2
+
+    """
+    fig, ax = plt.subplots()
+    ax.plot(z_windows, 1e-14*resist)
+    #ax.fill_between(z_windows, resist+resist_err, 
+    #        resist-resist_err,
+    #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
+    ax.set_xlabel(u'z, {0}'.format(z_units))
+    ax.set_ylabel(u'R(z), {0}'.format(Res_units))
+    ax.grid(grid)
+    fig.tight_layout()
+    fig.savefig(fig_filename)
+
 def plot_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff_err, 
         z_units=u'\u00c5', D_units=u'1E5 cm\u00b2/s', fig_filename='d_z.pdf',
         grid=True):
@@ -130,10 +148,10 @@ def plot_sym_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff
     """Plot the diffusion coefficient as a function of z-position.
     """
     fig, ax = plt.subplots()
-    ax.plot(z_windows, diffusion_coeff)
-    ax.fill_between(z_windows, diffusion_coeff+diffusion_coeff_err, 
-            diffusion_coeff-diffusion_coeff_err,
-            facecolor='#a8a8a8', edgecolor='#a8a8a8')
+    ax.semilogy(z_windows, diffusion_coeff)
+    #ax.fill_between(z_windows, diffusion_coeff+diffusion_coeff_err, 
+    #        diffusion_coeff-diffusion_coeff_err,
+    #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
     ax.set_xlabel(u'z, {0}'.format(z_units))
     ax.set_ylabel(u'D(z), {0}'.format(D_units))
     ax.grid(grid)
