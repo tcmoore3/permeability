@@ -133,6 +133,8 @@ def plot_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff_err
     """
     fig, ax = plt.subplots()
     ax.plot(z_windows, diffusion_coeff)
+    ax.plot([-40, -30],[3.86e-5, 3.86e-5],linestyle='--', color='r')
+    ax.plot([40, 30],[3.86e-5, 3.86e-5],linestyle='--', color='r')
     ax.fill_between(z_windows, diffusion_coeff+diffusion_coeff_err, 
             diffusion_coeff-diffusion_coeff_err,
             facecolor='#a8a8a8', edgecolor='#a8a8a8')
@@ -149,6 +151,9 @@ def plot_sym_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff
     """
     fig, ax = plt.subplots()
     ax.semilogy(z_windows, diffusion_coeff)
+    # from Raabe and Sadus, JCP, 2012
+    ax.plot([-40, -30],[3.86e-5, 3.86e-5],linestyle='--', color='r')
+    ax.plot([40, 30],[3.86e-5, 3.86e-5],linestyle='--', color='r')
     ax.fill_between(z_windows, diffusion_coeff+diffusion_coeff_err, 
             diffusion_coeff-diffusion_coeff_err,
             facecolor='#a8a8a8', edgecolor='#a8a8a8')
