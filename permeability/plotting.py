@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
+from permeability.functions import savitzky_golay 
 import numpy as np
-
+import pdb
 
 def plot_forces(z_windows, forces, fig_filename='forces.pdf',
         z_units=u'\u00c5', force_units=u'kcal/mol-\u00c5', plot_mean=True,
@@ -96,6 +97,22 @@ def plot_free_energy_z(z_windows, free_energy, fig_filename='delta_G.pdf',
     fig.tight_layout()
     fig.savefig(fig_filename)
     plt.show()
+
+
+def plot_timeseries(time, forces, time_units='ps', force_units=u'kcal/mol-\u00c5', 
+        grid=True, fig_filename='force_timeseries.png'):
+    fig, ax = plt.subplots()
+    for force_series in forces.T:
+        ax.plot(time, force_series,zorder=0)
+        smoothdata = savitzky_golay(force_series, 15001, 3)
+        ax.plot(time, smoothdata)
+    ax.set_xlabel(u'time, {time_units}'.format(**locals()))
+    ax.set_ylabel(u'F(z), {force_units}'.format(**locals()))
+    ax.grid(grid,color='c')
+    fig.tight_layout()
+    fig.savefig('{fig_filename}'.format(**locals()))
+    plt.show()
+    
 
 def plot_force_acfs_time(time, int_facfs, time_units='ps', grid=True,
         fig_filename='force_acf_per_window.pdf'):

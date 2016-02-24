@@ -2,7 +2,36 @@ import os
 
 import natsort
 import numpy as np
+from math import factorial
 
+def savitzky_golay(y, window_size, order, deriv=0, rate=1):
+    """
+    Parameters
+    ----------
+    y:
+    window_size:
+    order:
+    deriv:
+    rate:
+    Returns
+    -------
+    """
+    if not (isinstance(window_size, int) and isinstance(order, int)):
+        raise ValueError("window_size and order must be of type int")
+    if window_size % 2 != 1 or window_size < 1:
+        raise TypeError('window_size must be a positive odd number')
+    if window_size < order + 2:
+        raise TypeError('window_size is too small for the polynomials order')
+
+    order_range = range(order+1)
+    half_window = (window_size - 1) // 2
+    b = np.mat([[k**i for i in order_range] for k in range(-half_window,
+                                                           half_window +1)])
+    m = np.linalg.pinv(b).A[deriv] * rate**deriv * factorial(deriv)
+    firstvals = y[0] + np.abs(y[1:half_window+1][::-1] - y[0])  # + should be -, just testing 
+    lastvals = y[-1] + np.abs(y[-half_window-1:-1][::-1] - y[-1])
+    y = np.concatenate((firstvals, y, lastvals))
+    return np.convolve(m[::-1], y, mode='valid')
 
 def perm_coeff(z, resist):
     """Calculate the overall permeability
@@ -141,6 +170,44 @@ def resistance(delG, diff_coeff, T, kB):
 
     return resist
     
+def force_timeseries(path, n_windows=None, start_window=0, n_sweeps=None, directory_prefix='Sweep'):
+    """
+    
+    Params
+    ------
+
+    Returns
+    -------
+
+    """
+    import glob
+    sweep_dirs = natsort.natsorted(glob.glob(
+        os.path.join(path, '{0}*/'.format(directory_prefix))))
+    if n_windows is None:
+        z_windows = np.loadtxt(os.path.join(sweep_dirs[0], 'y0list.txt'))
+        n_windows = z_windows.shape[0]
+    if n_sweeps is None:
+        n_sweeps = len(sweep_dirs)
+    print(n_windows) 
+    serieslen = 200000
+    forceseries = np.zeros((serieslen, n_windows))
+    for sweep, sweep_dir in enumerate(sweep_dirs[:n_sweeps]): 
+        for iw, window in enumerate(range(start_window,n_windows+start_window)):
+            print('Main Loop:  sweep '+str(sweep)+', window '+str(window))
+            data = np.loadtxt(os.path.join(sweep_dir, 'forceout{0}'.format(window)))
+            # note that the timeseries are not always of the same length
+            # we are primarily interested in the beginning, 
+            # to validate equilibrium
+            # for now I hardcode a fixed length
+            forces = data[range(serieslen), 1]
+            dstep = data[1, 0] - data[0, 0]  # 1 fs per step
+            
+            forceseries[:,iw] += forces/n_sweeps 
+    time = data[range(serieslen), 0]/1000
+    
+    #np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
+    return {'time': time, 'forces': forceseries}
+
 
 def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
         directory_prefix='Sweep'):
