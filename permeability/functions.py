@@ -5,16 +5,22 @@ import numpy as np
 from math import factorial
 
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
-    """
+    """ Smooth data
     Parameters
     ----------
-    y:
-    window_size:
-    order:
-    deriv:
-    rate:
+    y : np.ndarray, shape=(n,)
+        data to be smoothed
+    window_size : int
+        smoothing width
+    order : int
+        order of local polynomial fit
+    deriv : int
+    rate : int
+
     Returns
     -------
+         : np.ndarray, shape=(n,)
+    smoothed data, same lengths as original data
     """
     if not (isinstance(window_size, int) and isinstance(order, int)):
         raise ValueError("window_size and order must be of type int")
@@ -89,7 +95,7 @@ def symmetrize(data, zero_boundary_condition=False):
     Params
     ------
     data : np.ndarray, shape=(n,)
-        data to be symmetrized
+        Data to be symmetrized
     zero_boundary_condition : bool, default=False
         If True, shift the right half of the curve before symmetrizing
 
@@ -175,15 +181,31 @@ def resistance(delG, diff_coeff, T, kB):
     return resist
     
 def force_timeseries(path, timestep=1.0, n_windows=None, start_window=0, n_sweeps=None, directory_prefix='Sweep'):
-    """
+    """ Reading the raw data and plotting the sweep-averaged force time series for different windows
     
     Params
     ------
+    path : str 
+        The path to the directory with the data for each sweep 
     timestep : float
         Simulation timestep in fs
+    n_windows : int
+        Number of conseqecutive (neighboring) windows to plot, all windows used if no entry
+    start_window : int
+        The first window to analyze timeseries
+    n_sweeps : int
+        Number of sweeps to average over, all sweeps are used if no entry
+    directory_prefix : str, default = 'Sweep'
+        Prefix of directories in path that contain the force ACF data. E.g., if
+        the data is in sweep<N>, use directory_prefix='sweep'
 
     Returns
     -------
+    A dict containing the following values:
+        time : np.ndarray, shape=(n,)
+            The time values of the force timeseries 
+        forces : np.ndarray, shape=(n,n_windows)
+            sweep-averaged force timeseries in each requested window
 
     """
     import glob
