@@ -53,13 +53,15 @@ def perm_coeff(z, resist):
 
     return P
 
-def integrate_acf_over_time(filename, average_fraction=0.1):
+def integrate_acf_over_time(filename, timestep=1.0, average_fraction=0.1):
     """Open a text file, integrate the forces
 
     Params
     ------
     filename : str
         Filename of the text file containing forces
+    timestep : int
+        Simulation timestep in fs
     average_fraction : float
         Use last average_fraction of the data to calculate average 
         value of the converged eagle
@@ -76,7 +78,7 @@ def integrate_acf_over_time(filename, average_fraction=0.1):
     """
     data =  np.loadtxt(filename)
     time, FACF = data[:,0], data[:,1]
-    intF = np.cumsum(FACF)*(time[1]-time[0])
+    intF = np.cumsum(FACF)*(time[1]-time[0])*timestep
     lastbit = int((1.0-average_fraction)*intF.shape[0])
     intFval = np.mean(intF[-lastbit:])
     return intF, intFval 
@@ -117,13 +119,15 @@ def symmetrize(data, zero_boundary_condition=False):
         dataSym[-(i+1)], dataSym_err[-(i+1)] = val, err        
     return dataSym, dataSym_err
 
-def acf(forces, funlen, dstart=10):
+def acf(forces, timestep, funlen, dstart=10):
     """Calculate the autocorrelation of a function
 
     Params
     ------
     forces : np.ndarray, shape=(n,)
         The force timeseries acting on a molecules
+    timestep : float
+        Simulation timestep in fs
     funlen : int
         The desired length of the correlation function
 
@@ -170,11 +174,13 @@ def resistance(delG, diff_coeff, T, kB):
 
     return resist
     
-def force_timeseries(path, n_windows=None, start_window=0, n_sweeps=None, directory_prefix='Sweep'):
+def force_timeseries(path, timestep=1.0, n_windows=None, start_window=0, n_sweeps=None, directory_prefix='Sweep'):
     """
     
     Params
     ------
+    timestep : float
+        Simulation timestep in fs
 
     Returns
     -------
@@ -189,7 +195,7 @@ def force_timeseries(path, n_windows=None, start_window=0, n_sweeps=None, direct
     if n_sweeps is None:
         n_sweeps = len(sweep_dirs)
     print(n_windows) 
-    serieslen = 200000
+    serieslen = 150000 # used for force timeseries plot, does not affect permeability calc. 
     forceseries = np.zeros((serieslen, n_windows))
     for sweep, sweep_dir in enumerate(sweep_dirs[:n_sweeps]): 
         for iw, window in enumerate(range(start_window,n_windows+start_window)):
@@ -203,13 +209,13 @@ def force_timeseries(path, n_windows=None, start_window=0, n_sweeps=None, direct
             dstep = data[1, 0] - data[0, 0]  # 1 fs per step
             
             forceseries[:,iw] += forces/n_sweeps 
-    time = data[range(serieslen), 0]/1000
+    time = data[range(serieslen), 0]*timestep/1000
     
     #np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
     return {'time': time, 'forces': forceseries}
 
 
-def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
+def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
         directory_prefix='Sweep'):
     """Combine force autocorrelations to calculate the free energy profile
     
@@ -219,6 +225,8 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
         The path to the directories holding the correlation functions
     T : float
         The absolute temperature
+    timestep : float
+        Simulation timestep in fs
     kB : float
         Boltzmann constant, determines units (default is kcal/mol-K)
     n_sweeps : int
@@ -296,7 +304,7 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
             print('window / window z-value / max int_F')
         for window in range(n_windows):
             filename = os.path.join(sweep_dir, 'fcorr{0}.dat'.format(window))
-            int_F, int_F_val = integrate_acf_over_time(filename)
+            int_F, int_F_val = integrate_acf_over_time(filename,timestep)
             int_F_acf_vals[sweep, window] = int_F_val
             int_Fs.append(int_F)
             if int_facf_win is None:
@@ -329,7 +337,7 @@ def analyze_force_acf_data(path, T, n_sweeps=None, verbosity=1, kB=1.9872041e-3,
             'd_z_sym_err': diff_coeff_sym_err, 'R_z': resist,
             'int_F_acf_vals': int_F_acf_vals, 'permeability': P}
 
-def analyze_sweeps(path, n_sweeps=None, correlation_length=300000, 
+def analyze_sweeps(path, n_sweeps=None, timestep=1.0, correlation_length=300, 
         verbosity=0, directory_prefix='Sweep'):
     """Analyze the force data to calculate the force ACFs and mean force 
     at each window for each sweep
@@ -340,6 +348,10 @@ def analyze_sweeps(path, n_sweeps=None, correlation_length=300000,
         The path to the directory with the data for each sweep 
     n_sweeps : int
         The number of sweeps to analyze
+    timestep : float
+        Simulation timestep in fs
+    correlation_length : float
+        Desired force autocorrelation length in ps
     verbosity : int
         Level of detail to print
     directory_prefix : str, default = 'Sweep'
@@ -362,13 +374,13 @@ def analyze_sweeps(path, n_sweeps=None, correlation_length=300000,
         for window in range(n_windows):
             data = np.loadtxt(os.path.join(sweep_dir, 'forceout{0}'.format(window)))
             forces = data[:, 1]
-            dstep = data[1, 0] - data[0, 0]  # 1 fs per step
+            dstep = (data[1, 0] - data[0, 0])*timestep/1000 # data intervals in ps 
             if verbosity >= 2:
                 print('{0} / {1} / {2} / {3}'.format(
                     window, np.mean(data[:, 1]), data.shape[0], dstep))
             funlen = int(correlation_length/dstep)
-            FACF = acf(data[:, 1], funlen)
-            time = np.arange(0, funlen*dstep/1000, dstep/1000)  # Convert fs to ps?
+            FACF = acf(data[:, 1], timestep, funlen)
+            time = np.arange(0, funlen*dstep, dstep) 
             np.savetxt(os.path.join(sweep_dir, 'fcorr{0}.dat'.format(window)),
                     np.vstack((time, FACF)).T, fmt='%.4f')
             np.savetxt(os.path.join(sweep_dir, 'meanforce{0}.dat'.format(window)),
