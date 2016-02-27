@@ -287,9 +287,9 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
             The symmetrized average free energy profile
         dG_sym_err : np.ndarray, shape=(n_windows,)
             The error estimate in the symmetrized average free energy profile
-        diff_z_sym : np.ndarray, shape=(n_windows,)
+        d_z_sym : np.ndarray, shape=(n_windows,)
             The mean diffusion coefficients from each window
-        diff_z_sym_err : np.ndarray, shape=(n_windows,)
+        d_z_sym_err : np.ndarray, shape=(n_windows,)
             The error estimate on the diffusion coefficients from each window
         R_z : np.ndarray, shape=(n_windows,)
             Resistance in each window
