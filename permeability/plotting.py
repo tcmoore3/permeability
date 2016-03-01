@@ -43,9 +43,11 @@ def plot_forces(z_windows, forces, fig_filename='forces.pdf',
                 facecolor='#a8a8a8', edgecolor='#a8a8a8')
     for force_series in forces:
         ax.plot(z_windows, force_series, alpha=sweep_alpha, zorder=0)
-    ax.set_xlabel(u'z, {z_units}'.format(**locals()))
-    ax.set_ylabel(u'F(z), {force_units}'.format(**locals()))
+    ax.set_xlabel(u'z [{z_units}]'.format(**locals()))
+    ax.set_ylabel(u'F(z) [{force_units}]'.format(**locals()))
     ax.grid(grid)
+    zmin = z_windows[0]    
+    plt.xlim(zmin,-zmin)
     fig.tight_layout()
     fig.savefig('{fig_filename}'.format(**locals()))
     plt.show()
@@ -91,9 +93,11 @@ def plot_free_energy_z(z_windows, free_energy, fig_filename='delta_G.pdf',
                 facecolor='#a8a8a8', edgecolor='#a8a8a8')
     for free_energy_series in free_energy:
         ax.plot(z_windows, free_energy_series, alpha=sweep_alpha, zorder=0)
-    ax.set_xlabel(u'z, {z_units}'.format(**locals()))
-    ax.set_ylabel(u'\u0394G(z), {energy_units}'.format(**locals()))
+    ax.set_xlabel(u'z [{z_units}]'.format(**locals()))
+    ax.set_ylabel(u'\u0394G(z) [{energy_units}]'.format(**locals()))
     ax.grid(grid)
+    zmin = z_windows[0]    
+    plt.xlim(zmin,-zmin)
     fig.tight_layout()
     fig.savefig(fig_filename)
     plt.show()
@@ -106,8 +110,8 @@ def plot_timeseries(time, forces, time_units='ps', force_units=u'kcal/mol-\u00c5
         ax.plot(time, force_series,zorder=0)
         smoothdata = savitzky_golay(force_series, 15001, 3)
         ax.plot(time, smoothdata)
-    ax.set_xlabel(u'time, {time_units}'.format(**locals()))
-    ax.set_ylabel(u'F(z), {force_units}'.format(**locals()))
+    ax.set_xlabel(u'time [{time_units}]'.format(**locals()))
+    ax.set_ylabel(u'F_z(z) [{force_units}]'.format(**locals()))
     ax.grid(grid,color='c')
     fig.tight_layout()
     fig.savefig('{fig_filename}'.format(**locals()))
@@ -119,7 +123,7 @@ def plot_force_acfs_time(time, int_facfs, time_units='ps', grid=True,
     fig, ax = plt.subplots()
     for int_facf in int_facfs:
         ax.plot(time, int_facf)
-    ax.set_xlabel('t, {0}'.format(time_units))
+    ax.set_xlabel('t [{0}]'.format(time_units))
     ax.set_ylabel(r"$\int_0^t$ FACF dt'")
     ax.grid(grid)
     fig.tight_layout()
@@ -140,6 +144,8 @@ def plot_resistance_z(z_windows, resist,
     ax.set_xlabel(u'z, {0}'.format(z_units))
     ax.set_ylabel(u'R(z), {0}'.format(Res_units))
     ax.grid(grid)
+    zmin = z_windows[0]    
+    plt.xlim(zmin,-zmin)
     fig.tight_layout()
     fig.savefig(fig_filename)
 
@@ -148,15 +154,18 @@ def plot_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff_err
         grid=True):
     """Plot the diffusion coefficient as a function of z-position.
     """
+    zmin = z_windows[0]    
     fig, ax = plt.subplots()
     ax.plot(z_windows, diffusion_coeff)
-    ax.plot([-40, -30],[3.86e-5, 3.86e-5],linestyle='--', color='r')
-    ax.plot([40, 30],[3.86e-5, 3.86e-5],linestyle='--', color='r')
+    ax.plot([zmin, zmin+10],[3.86e-5, 3.86e-5],linestyle='--', color='r')
+    ax.plot([-zmin-10, -zmin],[3.86e-5, 3.86e-5],linestyle='--', color='r')
     ax.fill_between(z_windows, diffusion_coeff+diffusion_coeff_err, 
             diffusion_coeff-diffusion_coeff_err,
             facecolor='#a8a8a8', edgecolor='#a8a8a8')
-    ax.set_xlabel(u'z, {0}'.format(z_units))
-    ax.set_ylabel(u'D(z), {0}'.format(D_units))
+    ax.set_xlabel(u'z [{0}]'.format(z_units))
+    ax.set_ylabel(u'D(z) [{0}]'.format(D_units))
+    plt.ylim(0,1e-3)
+    plt.xlim(zmin,-zmin)
     ax.grid(grid)
     fig.tight_layout()
     fig.savefig(fig_filename)
@@ -169,13 +178,15 @@ def plot_sym_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff
     fig, ax = plt.subplots()
     ax.semilogy(z_windows, diffusion_coeff)
     # from Raabe and Sadus, JCP, 2012
-    ax.plot([-40, -30],[3.86e-5, 3.86e-5],linestyle='--', color='r')
-    ax.plot([40, 30],[3.86e-5, 3.86e-5],linestyle='--', color='r')
+    zmin = z_windows[0]    
+    ax.plot([zmin, zmin+10],[3.86e-5, 3.86e-5],linestyle='--', color='r')
+    ax.plot([-zmin-10, -zmin],[3.86e-5, 3.86e-5],linestyle='--', color='r')
     ax.fill_between(z_windows, diffusion_coeff+diffusion_coeff_err, 
             diffusion_coeff-diffusion_coeff_err,
             facecolor='#a8a8a8', edgecolor='#a8a8a8')
-    ax.set_xlabel(u'z, {0}'.format(z_units))
-    ax.set_ylabel(u'D(z), {0}'.format(D_units))
+    ax.set_xlabel(u'z [{0}]'.format(z_units))
+    ax.set_ylabel(u'D(z) [{0}]'.format(D_units))
+    plt.xlim(zmin,-zmin)
     ax.grid(grid)
     fig.tight_layout()
     fig.savefig(fig_filename)
@@ -212,9 +223,11 @@ def plot_symmetrized_free_energy(z_windows, delta_G, delta_G_err, z_units=u'\u00
     ax.fill_between(z_windows, delta_G+delta_G_err, 
             delta_G-delta_G_err,
             facecolor='#a8a8a8', edgecolor='#a8a8a8')
-    ax.set_xlabel(u'z, {0}'.format(z_units))
-    ax.set_ylabel(u'G(z), {0}'.format(energy_units))
+    ax.set_xlabel(u'z [{0}]'.format(z_units))
+    ax.set_ylabel(u'\u0394G(z) [{0}]'.format(energy_units))
     ax.grid(grid)
+    zmin = z_windows[0]    
+    plt.xlim(zmin,-zmin)
     fig.tight_layout()
     fig.savefig(fig_filename)
 
@@ -254,8 +267,10 @@ def plot_sym_exp_free_energy(z_windows, delta_G, delta_G_err, diff_sym, T, kB=1.
     #ax.fill_between(z_windows, np.exp(delta_G), 
     #        np.exp(delta_G-delta_G_err),
     #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
-    ax.set_xlabel(u'z, {0}'.format(z_units))
-    ax.set_ylabel(u'exp(beta G(z))')
+    ax.set_xlabel(u'z [{0}]'.format(z_units))
+    ax.set_ylabel(u'1/D')
     ax.grid(grid)
+    zmin = z_windows[0]    
+    plt.xlim(zmin,-zmin)
     fig.tight_layout()
     fig.savefig(fig_filename)

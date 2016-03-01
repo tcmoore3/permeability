@@ -84,7 +84,7 @@ def integrate_acf_over_time(filename, timestep=1.0, average_fraction=0.1):
     """
     data =  np.loadtxt(filename)
     time, FACF = data[:,0], data[:,1]
-    intF = np.cumsum(FACF)*(time[1]-time[0])*timestep
+    intF = np.cumsum(FACF)*(time[1]-time[0])
     lastbit = int((1.0-average_fraction)*intF.shape[0])
     intFval = np.mean(intF[-lastbit:])
     return intF, intFval 
