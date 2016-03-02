@@ -141,8 +141,8 @@ def plot_resistance_z(z_windows, resist,
     #ax.fill_between(z_windows, resist+resist_err, 
     #        resist-resist_err,
     #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
-    ax.set_xlabel(u'z, {0}'.format(z_units))
-    ax.set_ylabel(u'R(z), {0}'.format(Res_units))
+    ax.set_xlabel(u'z [{0}]'.format(z_units))
+    ax.set_ylabel(u'R(z) [{0}]'.format(Res_units))
     ax.grid(grid)
     zmin = z_windows[0]    
     plt.xlim(zmin,-zmin)
@@ -164,7 +164,7 @@ def plot_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff_err
             facecolor='#a8a8a8', edgecolor='#a8a8a8')
     ax.set_xlabel(u'z [{0}]'.format(z_units))
     ax.set_ylabel(u'D(z) [{0}]'.format(D_units))
-    plt.ylim(0,1e-3)
+    plt.ylim(0,3e-4)
     plt.xlim(zmin,-zmin)
     ax.grid(grid)
     fig.tight_layout()
@@ -228,6 +228,7 @@ def plot_symmetrized_free_energy(z_windows, delta_G, delta_G_err, z_units=u'\u00
     ax.grid(grid)
     zmin = z_windows[0]    
     plt.xlim(zmin,-zmin)
+    plt.ylim(0,)
     fig.tight_layout()
     fig.savefig(fig_filename)
 
