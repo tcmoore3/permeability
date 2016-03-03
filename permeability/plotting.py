@@ -211,7 +211,7 @@ def plot_sym_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff
     fig.savefig(fig_filename)
 
 def plot_symmetrized_free_energy(z_windows, delta_G, delta_G_err, z_units=u'\u00c5',
-        energy_units=u'kcal/mol', fig_filename='delG-sym.pdf', grid=True, figax=(None,None), savefig=False):
+        energy_units=u'kcal/mol', fig_filename='delG-sym.pdf', grid=True, sys_name=None, figax=(None,None), savefig=False):
     """Plot symmetrized delta G
     
     Params
@@ -241,19 +241,25 @@ def plot_symmetrized_free_energy(z_windows, delta_G, delta_G_err, z_units=u'\u00
         fig, ax = plt.subplots()
     else:
         fig, ax = figax 
-    ax.plot(z_windows, delta_G)
+    
+    line, = ax.plot(z_windows, delta_G, label=sys_name)
     ax.fill_between(z_windows, delta_G+delta_G_err, 
             delta_G-delta_G_err,
-            facecolor='#a8a8a8', edgecolor='#a8a8a8')
+            facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
     ax.set_xlabel(u'z [{0}]'.format(z_units))
     ax.set_ylabel(u'\u0394G(z) [{0}]'.format(energy_units))
     ax.grid(grid)
+    #handles, labels = ax.get_legend_handles_labels()
+    ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+               ncol=2, mode="expand", borderaxespad=0., fontsize='medium')
+    #ax.legend(loc=3)
     zmin = z_windows[0]    
     plt.xlim(zmin,-zmin)
     plt.ylim(0,)
-    fig.tight_layout()
     if savefig:
-        fig.savefig(fig_filename)
+        fig.tight_layout()
+        fig.savefig(fig_filename, bbox_inches='tight')
+    
     return fig, ax
 
 
