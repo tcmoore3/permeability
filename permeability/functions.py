@@ -45,7 +45,7 @@ def perm_coeff(z, resist):
     Params
     ------
     z : np.ndarray, shape=(n_windows,)
-        The position of each window
+        The position of each window in Angstroms
     resist : np.ndarray, shape=(n_windows,)
         The resistance in each window
 
@@ -54,8 +54,8 @@ def perm_coeff(z, resist):
     P : int
         Overall permeability of the bilayer
     """
-    P = 1 / (np.sum(resist) * (z[1] - z[0]))
-    print('Overall permeability: {P:.3e} [cm/s]?'.format(**locals()))
+    P = 1 / (np.sum(resist) * (z[1] - z[0])*1e-8) # convert z from \AA to cm
+    print('Overall permeability: {P:.3e} [cm/s]'.format(**locals()))
 
     return P
 
@@ -230,7 +230,7 @@ def force_timeseries(path, timestep=1.0, n_windows=None, start_window=0, n_sweep
             # to validate equilibrium
             # for now I hardcode a fixed length
             forces = data[range(serieslen), 1]
-            dstep = data[1, 0] - data[0, 0]  # 1 fs per step
+            dstep = data[1, 0] - data[0, 0]
             
             forceseries[:,iw] += forces/n_sweeps 
     time = data[range(serieslen), 0]*timestep/1000

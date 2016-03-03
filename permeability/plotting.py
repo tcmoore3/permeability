@@ -117,13 +117,13 @@ def plot_timeseries(time, forces, time_units='ps', force_units=u'kcal/mol-\u00c5
     fig.savefig('{fig_filename}'.format(**locals()))
     plt.show()
     
-
-
-def plot_force_acfs_time(time, facfs, time_units='ps', grid=True,
+def plot_force_acfs_time(time, facfs, time_units='ps', normalize=True, grid=True,
         fig_filename='acf_per_window.pdf'):
     fig, ax = plt.subplots()
     for facf in facfs:
-        ax.semilogx(time, facf/facf[0])      
+        if normalize:
+            facf /= facf[0]
+        ax.semilogx(time, facf)      
     ax.set_xlabel('t [{0}]'.format(time_units))
     ax.set_ylabel(r'$\langle\Delta$F(t)$\Delta$F(0)$\rangle$')
     plt.xlim(time[0],time[-1])
@@ -276,7 +276,7 @@ def plot_sym_exp_free_energy(z_windows, delta_G, delta_G_err, diff_sym, T, kB=1.
 
     fig, ax = plt.subplots()
     ax.plot(z_windows, np.exp(kB*T*delta_G)) # dimensionless
-    ax.plot(z_windows, 1e5/diff_sym) # s/cm2 
+    ax.plot(z_windows, 1/diff_sym) # s/cm2 
     err = np.exp(delta_G) * delta_G_err
     val = np.exp(delta_G)
     #ax.fill_between(z_windows, np.exp(delta_G), 
