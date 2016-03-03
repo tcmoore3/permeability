@@ -275,15 +275,15 @@ def plot_sym_exp_free_energy(z_windows, delta_G, delta_G_err, diff_sym, T, kB=1.
     """
 
     fig, ax = plt.subplots()
-    ax.plot(z_windows, np.exp(delta_G/(kB*T))) # dimensionless
-    ax.plot(z_windows, 1/diff_sym) # s/cm2 
+    ax.semilogy(z_windows, np.exp(delta_G/(kB*T))) # dimensionless
+    ax.semilogy(z_windows, 1/diff_sym) # s/cm2 
     err = np.exp(delta_G) * delta_G_err
     val = np.exp(delta_G)
     #ax.fill_between(z_windows, np.exp(delta_G), 
     #        np.exp(delta_G-delta_G_err),
     #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
     ax.set_xlabel(u'z [{0}]'.format(z_units))
-    ax.set_ylabel(u'1/D')
+    ax.set_ylabel(u'1/D, exp(beta G)')
     ax.grid(grid)
     zmin = z_windows[0]    
     plt.xlim(zmin,-zmin)
