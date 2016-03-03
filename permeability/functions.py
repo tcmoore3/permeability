@@ -85,7 +85,7 @@ def integrate_acf_over_time(filename, timestep=1.0, average_fraction=0.1):
     the forces in the second column.
     """
     data =  np.loadtxt(filename)
-    time, FACF = data[:,0], data[:,1]
+    time, FACF = data[:,0], data[:,1] # time is stored in ps
     intF = np.cumsum(FACF)*(time[1]-time[0])
     lastbit = int((1.0-average_fraction)*intF.shape[0])
     intFval = np.mean(intF[-lastbit:])
@@ -367,8 +367,8 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
             'dG_stderr': dG_stderr, 'd_z': diffusion_coeff, 
             'd_z_err': diffusion_coeff_err, 'dG_sym': dG_sym, 
             'dG_sym_err': dG_sym_err, 'd_z_sym': diff_coeff_sym,
-            'd_z_sym_err': diff_coeff_sym_err, 'R_z': resist,
-            'int_F_acf_vals': int_F_acf_vals, 'permeability': P}
+                'd_z_sym_err': diff_coeff_sym_err, 'R_z': resist,
+                'int_F_acf_vals': int_F_acf_vals, 'permeability': P}
 
 def analyze_sweeps(path, n_sweeps=None, timestep=1.0, correlation_length=300, 
         verbosity=0, directory_prefix='Sweep'):
@@ -415,7 +415,7 @@ def analyze_sweeps(path, n_sweeps=None, timestep=1.0, correlation_length=300,
             FACF = acf(data[:, 1], timestep, funlen)
             time = np.arange(0, funlen*dstep, dstep) 
             np.savetxt(os.path.join(sweep_dir, 'fcorr{0}.dat'.format(window)),
-                    np.vstack((time, FACF)).T, fmt='%.4f')
+                    np.vstack((time, FACF)).T, fmt='%.3f')
             np.savetxt(os.path.join(sweep_dir, 'meanforce{0}.dat'.format(window)),
                     [np.mean(data[:, 1])], fmt='%.4f')
         if verbosity >= 1:
