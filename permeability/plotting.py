@@ -118,13 +118,27 @@ def plot_timeseries(time, forces, time_units='ps', force_units=u'kcal/mol-\u00c5
     plt.show()
     
 
-def plot_force_acfs_time(time, int_facfs, time_units='ps', grid=True,
-        fig_filename='force_acf_per_window.pdf'):
+
+def plot_force_acfs_time(time, facfs, time_units='ps', grid=True,
+        fig_filename='acf_per_window.pdf'):
+    fig, ax = plt.subplots()
+    for facf in facfs:
+        ax.semilogx(time, facf/facf[0])      
+    ax.set_xlabel('t [{0}]'.format(time_units))
+    ax.set_ylabel(r'$\langle\Delta$F(t)$\Delta$F(0)$\rangle$')
+    plt.xlim(time[0],time[-1])
+    ax.grid(grid)
+    fig.tight_layout()
+    fig.savefig(fig_filename)
+
+def plot_int_acfs_time(time, int_facfs, time_units='ps', grid=True,
+        fig_filename='int_acf_per_window.pdf'):
     fig, ax = plt.subplots()
     for int_facf in int_facfs:
-        ax.plot(time, int_facf)
+        ax.loglog(time, int_facf)      
     ax.set_xlabel('t [{0}]'.format(time_units))
-    ax.set_ylabel(r"$\int_0^t$ FACF dt'")
+    ax.set_ylabel(r"$\int_0^t\langle\Delta$F(t')$\Delta$F(0)$\rangle$dt'")
+    plt.xlim(time[0],time[-1])
     ax.grid(grid)
     fig.tight_layout()
     fig.savefig(fig_filename)

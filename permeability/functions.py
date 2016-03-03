@@ -78,6 +78,8 @@ def integrate_acf_over_time(filename, timestep=1.0, average_fraction=0.1):
         cummulative integral over a function
     intFval : float 
         the average value of the converged integral
+    FACF : np.ndarray, shape=(n,)
+        force autocorrelation function
 
     The text file is a 2 column file, with time in the first column and 
     the forces in the second column.
@@ -87,7 +89,7 @@ def integrate_acf_over_time(filename, timestep=1.0, average_fraction=0.1):
     intF = np.cumsum(FACF)*(time[1]-time[0])
     lastbit = int((1.0-average_fraction)*intF.shape[0])
     intFval = np.mean(intF[-lastbit:])
-    return intF, intFval 
+    return intF, intFval, FACF 
 
 def symmetrize(data, zero_boundary_condition=False):
     """Symmetrize a profile
@@ -275,6 +277,9 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
         int_facf_windows : np.ndarray, shape=(n_windows/2, n_timepoints)
             The values of the integrated autocorrelation functions over time,
             from each window
+        facf_windows : np.ndarray, shape=(n_windows/2, n_timepoints)
+            The autocorrelation functions over time,
+            from each window
         dG_mean : np.ndarray, shape=(n_windows,)
             The averaged free energy profiles from all sweeps
         dG_stderr : np.ndarray, shape=(n_windows,)
@@ -322,25 +327,30 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
     int_facf_win = None
     for sweep, sweep_dir in enumerate(sweep_dirs[:n_sweeps]): 
         int_Fs = []
+        Facfs = []
         if verbosity >=2:
             print('window / window z-value / max int_F')
         for window in range(n_windows):
             filename = os.path.join(sweep_dir, 'fcorr{0}.dat'.format(window))
-            int_F, int_F_val = integrate_acf_over_time(filename,timestep)
+            int_F, int_F_val, Facf = integrate_acf_over_time(filename,timestep)
             int_F_acf_vals[sweep, window] = int_F_val
             int_Fs.append(int_F)
+            Facfs.append(Facf)
             if int_facf_win is None:
                 int_facf_win = np.zeros((n_win_half, int_F.shape[0]))
+                facf_win = np.zeros((n_win_half, int_F.shape[0]))
             forces[sweep, window] = np.loadtxt(
                     os.path.join(sweep_dir, 'meanforce{0}.dat'.format(window)))
             if verbosity >= 2:
                 print(window, z_windows[window], max(int_F))
         for i, val in enumerate(int_facf_win):
             val += 0.5 * (int_Fs[i] + int_Fs[-i-1])
+            facf_win[i] += 0.5 * (Facfs[i] + Facfs[-i-1])
         if verbosity >= 1:
             print('End of sweep {0}'.format(sweep))
         dG[sweep, :] = - np.cumsum(forces[sweep,:]) * dz
     int_facf_win /= n_sweeps
+    facf_win /= n_sweeps
     dG_mean = np.mean(dG, axis=0)
     dG_stderr = np.std(dG, axis=0) / np.sqrt(n_sweeps)
     diffusion_coeff = RT2 / np.mean(int_F_acf_vals, axis=0)
@@ -352,7 +362,8 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
     P = perm_coeff(z_windows,resist)
     #np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
     return {'z': z_windows, 'time': time, 'forces': forces, 'dG': dG,
-            'int_facf_windows': int_facf_win, 'dG_mean': dG_mean, 
+            'int_facf_windows': int_facf_win, 'facf_windows': facf_win,
+            'dG_mean': dG_mean, 
             'dG_stderr': dG_stderr, 'd_z': diffusion_coeff, 
             'd_z_err': diffusion_coeff_err, 'dG_sym': dG_sym, 
             'dG_sym_err': dG_sym_err, 'd_z_sym': diff_coeff_sym,
