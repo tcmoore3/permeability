@@ -178,7 +178,7 @@ def resistance(delG, diff_coeff, T, kB):
     resist : np.ndarray, shape=(n_windows,)
     """
 
-    resist = np.exp(kB*T*delG)/diff_coeff 
+    resist = np.exp(delG/(kB*T))/diff_coeff 
 
     return resist
     

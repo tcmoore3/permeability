@@ -275,7 +275,7 @@ def plot_sym_exp_free_energy(z_windows, delta_G, delta_G_err, diff_sym, T, kB=1.
     """
 
     fig, ax = plt.subplots()
-    ax.plot(z_windows, np.exp(kB*T*delta_G)) # dimensionless
+    ax.plot(z_windows, np.exp(delta_G/(kB*T))) # dimensionless
     ax.plot(z_windows, 1/diff_sym) # s/cm2 
     err = np.exp(delta_G) * delta_G_err
     val = np.exp(delta_G)
