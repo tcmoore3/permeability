@@ -145,23 +145,28 @@ def plot_int_acfs_time(time, int_facfs, time_units='ps', grid=True,
 
 def plot_resistance_z(z_windows, resist, 
         z_units=u'\u00c5', Res_units=u's/cm\u00b2', fig_filename='res_z.pdf',
-        grid=True):
+        grid=True, figax=(None,None), savefig=False):
     """Plot the diffusion coefficient as a function of z-position.
         Resistant input is in 1e-5 s/cm2
 
     """
-    fig, ax = plt.subplots()
-    ax.plot(z_windows, resist)
+    if figax == (None, None):
+        fig, ax = plt.subplots()
+    else:
+        fig, ax = figax 
+    ax.semilogy(z_windows, resist)
     #ax.fill_between(z_windows, resist+resist_err, 
     #        resist-resist_err,
     #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
-    ax.set_xlabel(u'z [{0}]'.format(z_units))
-    ax.set_ylabel(u'R(z) [{0}]'.format(Res_units))
-    ax.grid(grid)
-    zmin = z_windows[0]    
-    plt.xlim(zmin,-zmin)
-    fig.tight_layout()
-    fig.savefig(fig_filename)
+    if savefig:
+        ax.set_xlabel(u'z [{0}]'.format(z_units))
+        ax.set_ylabel(u'R(z) [{0}]'.format(Res_units))
+        ax.grid(grid)
+        zmin = z_windows[0]    
+        plt.xlim(zmin,-zmin)
+        fig.tight_layout()
+        fig.savefig(fig_filename)
+    return fig, ax
 
 def plot_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff_err, 
         z_units=u'\u00c5', D_units=u'cm\u00b2/s', fig_filename='d_z.pdf',
@@ -206,7 +211,7 @@ def plot_sym_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff
     fig.savefig(fig_filename)
 
 def plot_symmetrized_free_energy(z_windows, delta_G, delta_G_err, z_units=u'\u00c5',
-        energy_units=u'kcal/mol', fig_filename='delG-sym.pdf', grid=True):
+        energy_units=u'kcal/mol', fig_filename='delG-sym.pdf', grid=True, figax=(None,None), savefig=False):
     """Plot symmetrized delta G
     
     Params
@@ -232,7 +237,10 @@ def plot_symmetrized_free_energy(z_windows, delta_G, delta_G_err, z_units=u'\u00
     and saves it to disk.
     """
 
-    fig, ax = plt.subplots()
+    if figax == (None, None):
+        fig, ax = plt.subplots()
+    else:
+        fig, ax = figax 
     ax.plot(z_windows, delta_G)
     ax.fill_between(z_windows, delta_G+delta_G_err, 
             delta_G-delta_G_err,
@@ -244,7 +252,9 @@ def plot_symmetrized_free_energy(z_windows, delta_G, delta_G_err, z_units=u'\u00
     plt.xlim(zmin,-zmin)
     plt.ylim(0,)
     fig.tight_layout()
-    fig.savefig(fig_filename)
+    if savefig:
+        fig.savefig(fig_filename)
+    return fig, ax
 
 
 def plot_sym_exp_free_energy(z_windows, delta_G, delta_G_err, diff_sym, T, kB=1.9872041e-3, z_units=u'\u00c5',
