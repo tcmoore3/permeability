@@ -118,7 +118,7 @@ def plot_timeseries(time, forces, time_units='ps', force_units=u'kcal/mol-\u00c5
     plt.show()
     
 def plot_force_acfs_time(time, facfs, time_units='ps', normalize=True, grid=True,
-        fig_filename='acf_per_window.pdf'):
+        fig_filename='acf_per_window.png'):
     fig, ax = plt.subplots()
     for i, facf in enumerate(facfs):
         if normalize:
@@ -133,7 +133,7 @@ def plot_force_acfs_time(time, facfs, time_units='ps', normalize=True, grid=True
     fig.savefig(fig_filename)
 
 def plot_int_acfs_time(time, int_facfs, time_units='ps', grid=True,
-        fig_filename='int_acf_per_window.pdf'):
+        fig_filename='int_acf_per_window.png'):
     fig, ax = plt.subplots()
     for i, int_facf in enumerate(int_facfs):
         if np.mod(i,2)==0: # just to make the graph less crowded
