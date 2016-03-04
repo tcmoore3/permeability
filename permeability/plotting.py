@@ -120,10 +120,11 @@ def plot_timeseries(time, forces, time_units='ps', force_units=u'kcal/mol-\u00c5
 def plot_force_acfs_time(time, facfs, time_units='ps', normalize=True, grid=True,
         fig_filename='acf_per_window.pdf'):
     fig, ax = plt.subplots()
-    for facf in facfs:
+    for i, facf in enumerate(facfs):
         if normalize:
             facf /= facf[0]
-        ax.semilogx(time, facf)      
+        if np.mod(i,2)==0: # just to make the graph less crowded
+            ax.semilogx(time, facf)      
     ax.set_xlabel('t [{0}]'.format(time_units))
     ax.set_ylabel(r'$\langle\Delta$F(t)$\Delta$F(0)$\rangle$')
     plt.xlim(time[0],time[-1])
@@ -134,8 +135,9 @@ def plot_force_acfs_time(time, facfs, time_units='ps', normalize=True, grid=True
 def plot_int_acfs_time(time, int_facfs, time_units='ps', grid=True,
         fig_filename='int_acf_per_window.pdf'):
     fig, ax = plt.subplots()
-    for int_facf in int_facfs:
-        ax.loglog(time, int_facf)      
+    for i, int_facf in enumerate(int_facfs):
+        if np.mod(i,2)==0: # just to make the graph less crowded
+            ax.loglog(time, int_facf)      
     ax.set_xlabel('t [{0}]'.format(time_units))
     ax.set_ylabel(r"$\int_0^t\langle\Delta$F(t')$\Delta$F(0)$\rangle$dt'")
     plt.xlim(time[0],time[-1])
@@ -145,7 +147,7 @@ def plot_int_acfs_time(time, int_facfs, time_units='ps', grid=True,
 
 def plot_resistance_z(z_windows, resist, 
         z_units=u'\u00c5', Res_units=u's/cm\u00b2', fig_filename='res_z.pdf',
-        grid=True, figax=(None,None), savefig=False):
+        grid=True, sys_name=None, figax=(None,None), savefig=False):
     """Plot the diffusion coefficient as a function of z-position.
         Resistant input is in 1e-5 s/cm2
 
@@ -154,18 +156,21 @@ def plot_resistance_z(z_windows, resist,
         fig, ax = plt.subplots()
     else:
         fig, ax = figax 
-    ax.semilogy(z_windows, resist)
+    line, = ax.semilogy(z_windows, resist, label=sys_name)
     #ax.fill_between(z_windows, resist+resist_err, 
     #        resist-resist_err,
     #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
+    ax.set_xlabel(u'z [{0}]'.format(z_units))
+    ax.set_ylabel(u'R(z) [{0}]'.format(Res_units))
+    ax.grid(grid)
+    zmin = z_windows[0]    
+    plt.xlim(zmin,-zmin)
+    ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+               ncol=2, mode="expand", borderaxespad=0., fontsize='medium')
     if savefig:
-        ax.set_xlabel(u'z [{0}]'.format(z_units))
-        ax.set_ylabel(u'R(z) [{0}]'.format(Res_units))
-        ax.grid(grid)
-        zmin = z_windows[0]    
-        plt.xlim(zmin,-zmin)
         fig.tight_layout()
-        fig.savefig(fig_filename)
+        fig.savefig(fig_filename, bbox_inches='tight')
+    
     return fig, ax
 
 def plot_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff_err, 
@@ -191,24 +196,32 @@ def plot_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff_err
 
 def plot_sym_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff_err, 
         z_units=u'\u00c5', D_units=u'cm\u00b2/s', fig_filename='d-sym_z.pdf',
-        grid=True):
+        grid=True, sys_name=None, figax=(None,None), savefig=False):
     """Plot the diffusion coefficient as a function of z-position.
     """
-    fig, ax = plt.subplots()
-    ax.semilogy(z_windows, diffusion_coeff)
+    if figax == (None, None):
+        fig, ax = plt.subplots()
+    else:
+        fig, ax = figax 
+    line, = ax.semilogy(z_windows, diffusion_coeff, label=sys_name)
     # from Raabe and Sadus, JCP, 2012
     zmin = z_windows[0]    
     ax.plot([zmin, zmin+10],[3.86e-5, 3.86e-5],linestyle='--', color='r')
     ax.plot([-zmin-10, -zmin],[3.86e-5, 3.86e-5],linestyle='--', color='r')
     ax.fill_between(z_windows, diffusion_coeff+diffusion_coeff_err, 
             diffusion_coeff-diffusion_coeff_err,
-            facecolor='#a8a8a8', edgecolor='#a8a8a8')
+            facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
     ax.set_xlabel(u'z [{0}]'.format(z_units))
     ax.set_ylabel(u'D(z) [{0}]'.format(D_units))
+    ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
+               ncol=2, mode="expand", borderaxespad=0., fontsize='medium')
     plt.xlim(zmin,-zmin)
     ax.grid(grid)
-    fig.tight_layout()
-    fig.savefig(fig_filename)
+    if savefig:
+        fig.tight_layout()
+        fig.savefig(fig_filename, bbox_inches='tight')
+    
+    return fig, ax
 
 def plot_symmetrized_free_energy(z_windows, delta_G, delta_G_err, z_units=u'\u00c5',
         energy_units=u'kcal/mol', fig_filename='delG-sym.pdf', grid=True, sys_name=None, figax=(None,None), savefig=False):
