@@ -2,7 +2,13 @@ import os
 
 import natsort
 import numpy as np
+import math
 from math import factorial
+from groupy.gbb import Gbb 
+from groupy.system import System
+from groupy.mdio import *
+from groupy.order import *
+from groupy.box import Box
 
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     """ Smooth data
@@ -91,6 +97,40 @@ def integrate_acf_over_time(filename, timestep=1.0, average_fraction=0.1):
     intFval = np.mean(intF[-lastbit:])
     return intF, intFval, FACF 
 
+def symmetrize_each(data, zero_boundary_condition=False):
+    """Symmetrize a profile
+    
+    Params
+    ------
+    data : np.ndarray, shape=(n,n_sweeps)
+        Data to be symmetrized
+    zero_boundary_condition : bool, default=False
+        If True, shift the right half of the curve before symmetrizing
+
+    Returns
+    -------
+    dataSym : np.ndarray, shape=(n,)
+        symmetrized data
+
+    This function symmetrizes a 1D array. It also provides an error estimate
+    for each value, taken as the standard error between the "left" and "right"
+    values. The zero_boundary_condition shifts the "right" half of the curve 
+    such that the final value goes to 0. This should be used if the data is 
+    expected to approach zero, e.g., in the case of pulling a water molecule 
+    through one phase into bulk water.
+    """
+    n_sweeps = data.shape[0]
+    n_windows = data.shape[1]
+    n_win_half = int(np.ceil(float(n_windows)/2))
+    dataSym = np.zeros_like(data)
+    for s in range(n_sweeps):
+        for i, sym_val in enumerate(dataSym[s,:n_win_half]):
+            val = 0.5 * (data[s,i] + data[s,-(i+1)])
+            dataSym[s,i] = val
+            dataSym[s,-(i+1)] = val
+        dataSym[s,:] -= dataSym[s,0] 
+    return dataSym
+
 def symmetrize(data, zero_boundary_condition=False):
     """Symmetrize a profile
     
@@ -155,6 +195,36 @@ def acf(forces, timestep, funlen, dstart=10):
         dfzt = forces[origin:origin+funlen] - meanfz
         dfz0 = forces[origin] - meanfz;
         f1 += dfzt*dfz0
+        origin += dstart
+    return f1/ntraj
+
+def rotacf(theta, timestep, funlen, dstart=10):
+    """Calculate the autocorrelation of a function
+
+    Params
+    ------
+    forces : np.ndarray, shape=(n,)
+        The force timeseries acting on a molecules
+    timestep : float
+        Simulation timestep in fs
+    funlen : int
+        The desired length of the correlation function
+
+    Returns
+    -------
+    corr : np.array, shape=(funlen,)
+        The autocorrelation of the forces
+    """    
+    if funlen > theta.shape[0]:
+       raise Exception("Not enough data")
+    # number of time origins
+    ntraj = int(np.floor((theta.shape[0]-funlen)/dstart))
+    f1 = np.zeros((funlen))
+    origin = 0 
+    for i in range(ntraj):
+        fzt = theta[origin:origin+funlen]
+        fz0 = theta[origin];
+        f1 += fzt*fz0
         origin += dstart
     return f1/ntraj
 
@@ -355,20 +425,60 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
     dG_stderr = np.std(dG, axis=0) / np.sqrt(n_sweeps)
     diffusion_coeff = RT2 / np.mean(int_F_acf_vals, axis=0)
     diffusion_coeff_err = np.std(RT2 * int_F_acf_vals, axis=0) / np.sqrt(n_sweeps)
-    dG_sym, dG_sym_err = symmetrize(dG_mean, zero_boundary_condition=True) 
-    dG_sym -= dG_sym[0] # since the integration (over the forces) starts at 0 
+    dG_sym_all = symmetrize_each(dG, zero_boundary_condition=True) 
+    dG_sym = np.mean(dG_sym_all, axis=0)
+    dG_sym_err = np.std(dG_sym_all, axis=0) / np.sqrt(n_sweeps)
+   
+    #dG_sym, dG_sym_err = symmetrize(dG_mean, zero_boundary_condition=True) 
+    #dG_sym -= dG_sym[0] # since the integration (over the forces) starts at 0 
     diff_coeff_sym, diff_coeff_sym_err = symmetrize(diffusion_coeff) 
     resist = resistance(dG_sym, diff_coeff_sym, T, kB)
     P = perm_coeff(z_windows,resist)
     #np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
-    return {'z': z_windows, 'time': time, 'forces': forces, 'dG': dG,
+    return {'z': z_windows, 'time': time, 'forces': forces, 'dg': dg,
             'int_facf_windows': int_facf_win, 'facf_windows': facf_win,
-            'dG_mean': dG_mean, 
-            'dG_stderr': dG_stderr, 'd_z': diffusion_coeff, 
-            'd_z_err': diffusion_coeff_err, 'dG_sym': dG_sym, 
-            'dG_sym_err': dG_sym_err, 'd_z_sym': diff_coeff_sym,
-                'd_z_sym_err': diff_coeff_sym_err, 'R_z': resist,
-                'int_F_acf_vals': int_F_acf_vals, 'permeability': P}
+            'dg_mean': dg_mean, 
+            'dg_stderr': dg_stderr, 'd_z': diffusion_coeff, 
+            'd_z_err': diffusion_coeff_err, 'dg_sym': dg_sym, 
+            'dg_sym_err': dg_sym_err, 'd_z_sym': diff_coeff_sym,
+                'd_z_sym_err': diff_coeff_sym_err, 'r_z': resist,
+                'int_f_acf_vals': int_f_acf_vals, 'permeability': p}
+
+
+def analyze_rotacf_data(path, n_sweeps=None, verbosity=1, directory_prefix='Sweep'):
+
+    import glob
+    sweep_dirs = natsort.natsorted(glob.glob(
+        os.path.join(path, '{0}*/'.format(directory_prefix))))
+    time = np.loadtxt(os.path.join(sweep_dirs[0], 'rcorr0.dat'))[:, 0]
+    z_windows = np.loadtxt(os.path.join(sweep_dirs[0], 'y0list.txt'))
+    n_windows = z_windows.shape[0]
+    n_win_half = int(np.ceil(float(n_windows)/2))
+
+    if n_sweeps is None:
+        n_sweeps = len(sweep_dirs)
+    racf_win = None
+    for sweep, sweep_dir in enumerate(sweep_dirs[:n_sweeps]): 
+        Racfs = []
+        if verbosity >=2:
+            print('window / window z-value')
+        for window in range(n_windows):
+            filename = os.path.join(sweep_dir, 'rcorr{0}.dat'.format(window))
+            data =  np.loadtxt(filename)
+            time, Racf = data[:,0], data[:,1] # time is stored in ps
+            Racfs.append(Racf)
+            if racf_win is None:
+                racf_win = np.zeros((n_win_half, Racf.shape[0]))
+            if verbosity >= 2:
+                print(window, z_windows[window])
+        for i, val in enumerate(racf_win):
+            val += 0.5 * (Racfs[i] + Racfs[-i-1])
+        if verbosity >= 1:
+            print('End of sweep {0}'.format(sweep))
+    racf_win /= n_sweeps
+
+    return {'z': z_windows, 'time': time, 'racf_windows': racf_win}
+
 
 def analyze_sweeps(path, n_sweeps=None, timestep=1.0, correlation_length=300, 
         verbosity=0, directory_prefix='Sweep'):
@@ -420,3 +530,85 @@ def analyze_sweeps(path, n_sweeps=None, timestep=1.0, correlation_length=300,
                     [np.mean(data[:, 1])], fmt='%.4f')
         if verbosity >= 1:
             print('Finished analyzing data in {0}'.format(sweep_dir))
+
+
+def analyze_rot_sweeps(path, n_sweeps=None, timestep=1.0, correlation_length=300, 
+        directory_prefix='Sweep'):
+    """Analyze the rotational correlation at each window for each sweep
+    Data currently only available for DSPC
+
+    Params
+    ------
+    path : str 
+        The path to the directory with the data for each sweep 
+    n_sweeps : int
+        The number of sweeps to analyze
+    timestep : float
+        Simulation timestep in fs
+    correlation_length : float
+        Desired force autocorrelation length in ps
+    directory_prefix : str, default = 'Sweep'
+        Prefix of directories in path that contain the force ACF data. E.g., if
+        the data is in sweep<N>, use directory_prefix='sweep'
+
+    Returns
+    -------
+    This function prints the rotational ACF at each window from each sweep.
+    """
+    import glob
+    sweep_dirs = natsort.natsorted(glob.glob(os.path.join(
+        path, '{0}*/'.format(directory_prefix))))
+
+    import pdb; pdb.set_trace()    
+    n_windows = np.loadtxt(os.path.join(sweep_dirs[0], 'y0list.txt')).shape[0]
+    info = [(7, 3, 'water')] # 7 water molecules per simulation 
+    
+    # loop over sweeps
+    for sweep_dir in sweep_dirs[:n_sweeps]:
+        window_order = np.arange(0, 31, 5)
+        theta_by_window = list() 
+        for i in range(n_windows):
+            theta_by_window.append(list())
+
+        for sim in range(5):
+            with open(sweep_dir+'tracerpos'+str(sim+1)+'.xyz', 'r') as trj:
+                IDs = read_frame_lammpstrj(trj, getIDs=True)
+                IDs = np.sort(IDs)
+                IDdic = []
+                for iID, ID in enumerate(IDs):
+                    IDdic.append((ID, iID))
+                d_ID = {int(x[0]): x[1] for x in IDdic}
+                while True:
+                    try:
+                        xyz, types, step, box = read_frame_lammpstrj(trj, IDdic=d_ID)
+                    except:
+                        print('Reached end of file')
+                        break
+                    system = System(system_info=info, box=box)
+                    system.convert_from_traj(xyz, types)
+                    for i, gbb in enumerate(system.gbbs):
+                        gbb.masses = np.asarray([15.994, 1.008, 1.008]).reshape((3, 1))
+                        gbb.calc_com()
+                    sorted_gbbs = sorted(system.gbbs, key=lambda x: x.com[2])
+                    
+                    for window, gbb in zip(window_order, sorted_gbbs):
+                        gbb.load_xml_prototype('water.xml', skip_coords=True, skip_types=False, skip_masses=True)
+                        director = calc_director(Gbb.calc_inertia_tensor(gbb))
+                        
+                        theta_by_window[window].append(math.degrees(math.acos(director[2])))
+            window_order += 1
+
+        # all data for this sweep has been collected and can be processed
+        print('Window')
+        for window in range(n_windows):
+            
+            dstep = 1.0 # ps
+            
+            print('{0}'.format(window))
+            funlen = int(correlation_length/dstep)
+            
+            RACF = rotacf(np.asarray(theta_by_window[window]), timestep, funlen)
+            time = np.arange(0, funlen*dstep, dstep) 
+            np.savetxt(os.path.join(sweep_dir, 'rcorr{0}.dat'.format(window)),
+                    np.vstack((time, RACF)).T, fmt='%.3f')
+        print('Finished analyzing data in {0}'.format(sweep_dir))

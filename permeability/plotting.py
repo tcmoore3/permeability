@@ -117,6 +117,21 @@ def plot_timeseries(time, forces, time_units='ps', force_units=u'kcal/mol-\u00c5
     fig.savefig('{fig_filename}'.format(**locals()))
     plt.show()
     
+def plot_rot_acfs_time(time, racfs, time_units='ps', normalize=True, grid=True,
+        fig_filename='racf_per_window.png'):
+    fig, ax = plt.subplots()
+    for i, racf in enumerate(racfs):
+        if normalize:
+            racf /= racf[0]
+        if np.mod(i,2)==0: # just to make the graph less crowded
+            ax.semilogx(time, racf)      
+    ax.set_xlabel('t [{0}]'.format(time_units))
+    ax.set_ylabel(r'$\langle\Theta$(t)$\Theta$(0)$\rangle$')
+    plt.xlim(time[0],time[-1])
+    ax.grid(grid)
+    fig.tight_layout()
+    fig.savefig(fig_filename)
+
 def plot_force_acfs_time(time, facfs, time_units='ps', normalize=True, grid=True,
         fig_filename='acf_per_window.png'):
     fig, ax = plt.subplots()
