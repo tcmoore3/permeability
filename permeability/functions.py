@@ -198,7 +198,7 @@ def acf(forces, timestep, funlen, dstart=10):
         origin += dstart
     return f1/ntraj
 
-def rotacf(theta, timestep, funlen, dstart=10):
+def rotacf(theta, funlen, dstart=2):
     """Calculate the autocorrelation of a function
 
     Params
@@ -532,8 +532,7 @@ def analyze_sweeps(path, n_sweeps=None, timestep=1.0, correlation_length=300,
             print('Finished analyzing data in {0}'.format(sweep_dir))
 
 
-def analyze_rot_sweeps(path, n_sweeps=None, timestep=1.0, correlation_length=300, 
-        directory_prefix='Sweep'):
+def analyze_rot_sweeps(path, n_sweeps=None, correlation_length=600, directory_prefix='Sweep'):
     """Analyze the rotational correlation at each window for each sweep
     Data currently only available for DSPC
 
@@ -543,8 +542,6 @@ def analyze_rot_sweeps(path, n_sweeps=None, timestep=1.0, correlation_length=300
         The path to the directory with the data for each sweep 
     n_sweeps : int
         The number of sweeps to analyze
-    timestep : float
-        Simulation timestep in fs
     correlation_length : float
         Desired force autocorrelation length in ps
     directory_prefix : str, default = 'Sweep'
@@ -559,7 +556,9 @@ def analyze_rot_sweeps(path, n_sweeps=None, timestep=1.0, correlation_length=300
     sweep_dirs = natsort.natsorted(glob.glob(os.path.join(
         path, '{0}*/'.format(directory_prefix))))
 
-    import pdb; pdb.set_trace()    
+    if n_sweeps is None:
+        n_sweeps = len(sweep_dirs)
+
     n_windows = np.loadtxt(os.path.join(sweep_dirs[0], 'y0list.txt')).shape[0]
     info = [(7, 3, 'water')] # 7 water molecules per simulation 
     
@@ -607,7 +606,7 @@ def analyze_rot_sweeps(path, n_sweeps=None, timestep=1.0, correlation_length=300
             print('{0}'.format(window))
             funlen = int(correlation_length/dstep)
             
-            RACF = rotacf(np.asarray(theta_by_window[window]), timestep, funlen)
+            RACF = rotacf(np.asarray(theta_by_window[window]), funlen)
             time = np.arange(0, funlen*dstep, dstep) 
             np.savetxt(os.path.join(sweep_dir, 'rcorr{0}.dat'.format(window)),
                     np.vstack((time, RACF)).T, fmt='%.3f')
