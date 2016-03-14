@@ -62,6 +62,7 @@ def perm_coeff(z, resist):
     """
     P = 1 / (np.sum(resist) * (z[1] - z[0])*1e-8) # convert z from \AA to cm
     print('Overall permeability: {P:.3e} [cm/s]'.format(**locals()))
+    print('WVTR: {3.6e7*P:.3e} [g/m^2/hr]'.format(**locals()))
 
     return P
 
@@ -435,14 +436,14 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
     resist = resistance(dG_sym, diff_coeff_sym, T, kB)
     P = perm_coeff(z_windows,resist)
     #np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
-    return {'z': z_windows, 'time': time, 'forces': forces, 'dg': dg,
+    return {'z': z_windows, 'time': time, 'forces': forces, 'dG': dG,
             'int_facf_windows': int_facf_win, 'facf_windows': facf_win,
-            'dg_mean': dg_mean, 
-            'dg_stderr': dg_stderr, 'd_z': diffusion_coeff, 
-            'd_z_err': diffusion_coeff_err, 'dg_sym': dg_sym, 
-            'dg_sym_err': dg_sym_err, 'd_z_sym': diff_coeff_sym,
-                'd_z_sym_err': diff_coeff_sym_err, 'r_z': resist,
-                'int_f_acf_vals': int_f_acf_vals, 'permeability': p}
+            'dG_mean': dG_mean, 
+            'dG_stderr': dG_stderr, 'd_z': diffusion_coeff, 
+            'd_z_err': diffusion_coeff_err, 'dG_sym': dG_sym, 
+            'dG_sym_err': dG_sym_err, 'd_z_sym': diff_coeff_sym,
+                'd_z_sym_err': diff_coeff_sym_err, 'R_z': resist,
+                'int_F_acf_vals': int_F_acf_vals, 'permeability': P}
 
 
 def analyze_rotacf_data(path, n_sweeps=None, verbosity=1, directory_prefix='Sweep'):
@@ -594,7 +595,8 @@ def analyze_rot_sweeps(path, n_sweeps=None, correlation_length=600, directory_pr
                         gbb.load_xml_prototype('water.xml', skip_coords=True, skip_types=False, skip_masses=True)
                         director = calc_director(Gbb.calc_inertia_tensor(gbb))
                         
-                        theta_by_window[window].append(math.degrees(math.acos(director[2])))
+                        theta_by_window[window].append(math.degrees(math.acos(director[2]))-90)
+                        #theta_by_window[window].append(director[2])
             window_order += 1
 
         # all data for this sweep has been collected and can be processed
@@ -603,11 +605,14 @@ def analyze_rot_sweeps(path, n_sweeps=None, correlation_length=600, directory_pr
             
             dstep = 1.0 # ps
             
-            print('{0}'.format(window))
+            #print('{0}'.format(window))
             funlen = int(correlation_length/dstep)
             
             RACF = rotacf(np.asarray(theta_by_window[window]), funlen)
             time = np.arange(0, funlen*dstep, dstep) 
             np.savetxt(os.path.join(sweep_dir, 'rcorr{0}.dat'.format(window)),
                     np.vstack((time, RACF)).T, fmt='%.3f')
+            np.savetxt(os.path.join(sweep_dir, 'orient{0}.dat'.format(window)),
+                    np.vstack(theta_by_window[window]).T, fmt='%.3f')
+            print(window, np.mean(theta_by_window[window]),np.std(theta_by_window[window]))
         print('Finished analyzing data in {0}'.format(sweep_dir))
