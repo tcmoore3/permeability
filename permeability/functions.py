@@ -62,7 +62,7 @@ def perm_coeff(z, resist):
     """
     P = 1 / (np.sum(resist) * (z[1] - z[0])*1e-8) # convert z from \AA to cm
     print('Overall permeability: {P:.3e} [cm/s]'.format(**locals()))
-    print('WVTR: {3.6e7*P:.3e} [g/m^2/hr]'.format(**locals()))
+    print('WVTR: %f [g/m^2/hr]' % (3.6e7*P))
 
     return P
 
