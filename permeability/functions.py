@@ -533,7 +533,7 @@ def analyze_sweeps(path, n_sweeps=None, timestep=1.0, correlation_length=300,
             print('Finished analyzing data in {0}'.format(sweep_dir))
 
 
-def analyze_rot_sweeps(path, n_sweeps=None, correlation_length=600, directory_prefix='Sweep'):
+def analyze_rot_sweeps(path, n_sweeps=None, correlation_length=300, directory_prefix='Sweep'):
     """Analyze the rotational correlation at each window for each sweep
     Data currently only available for DSPC
 
