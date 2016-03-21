@@ -129,7 +129,8 @@ def symmetrize_each(data, zero_boundary_condition=False):
             val = 0.5 * (data[s,i] + data[s,-(i+1)])
             dataSym[s,i] = val
             dataSym[s,-(i+1)] = val
-        dataSym[s,:] -= dataSym[s,0] 
+        if zero_boundary_condition:
+            dataSym[s,:] -= dataSym[s,0] 
     return dataSym
 
 def symmetrize(data, zero_boundary_condition=False):
@@ -371,7 +372,8 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
             Resistance in each window
         int_F_acf_vals : np.ndarray
             The integrals of the force autocorrelation functions
-
+        permeability : float
+            The global bilayer permeability
     This works under the assumption that the data for each sweep is listed in
     path/SweepN, where N is the sweep number.
     If n_.sweeps=None, then this function finds the number of sweeps.
@@ -420,21 +422,27 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
         if verbosity >= 1:
             print('End of sweep {0}'.format(sweep))
         dG[sweep, :] = - np.cumsum(forces[sweep,:]) * dz
+    
     int_facf_win /= n_sweeps
     facf_win /= n_sweeps
     dG_mean = np.mean(dG, axis=0)
     dG_stderr = np.std(dG, axis=0) / np.sqrt(n_sweeps)
+    
     diffusion_coeff = RT2 / np.mean(int_F_acf_vals, axis=0)
     diffusion_coeff_err = np.std(RT2 * int_F_acf_vals, axis=0) / np.sqrt(n_sweeps)
+    #diff_coeff_sym, diff_coeff_sym_err = symmetrize(diffusion_coeff) 
+   
+    diff_coeff_sym_all = symmetrize_each(int_F_acf_vals) 
+    diff_coeff_sym = RT2/np.mean(diff_coeff_sym_all, axis=0)
+    diff_coeff_sym_err = RT2*np.std(diff_coeff_sym_all, axis=0)/(np.mean(diff_coeff_sym_all, axis=0)**2)/np.sqrt(n_sweeps)
+     
     dG_sym_all = symmetrize_each(dG, zero_boundary_condition=True) 
     dG_sym = np.mean(dG_sym_all, axis=0)
     dG_sym_err = np.std(dG_sym_all, axis=0) / np.sqrt(n_sweeps)
-   
-    #dG_sym, dG_sym_err = symmetrize(dG_mean, zero_boundary_condition=True) 
-    #dG_sym -= dG_sym[0] # since the integration (over the forces) starts at 0 
-    diff_coeff_sym, diff_coeff_sym_err = symmetrize(diffusion_coeff) 
+    
     resist = resistance(dG_sym, diff_coeff_sym, T, kB)
-    P = perm_coeff(z_windows,resist)
+    perm = perm_coeff(z_windows,resist)
+    
     #np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
     return {'z': z_windows, 'time': time, 'forces': forces, 'dG': dG,
             'int_facf_windows': int_facf_win, 'facf_windows': facf_win,
@@ -442,8 +450,8 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
             'dG_stderr': dG_stderr, 'd_z': diffusion_coeff, 
             'd_z_err': diffusion_coeff_err, 'dG_sym': dG_sym, 
             'dG_sym_err': dG_sym_err, 'd_z_sym': diff_coeff_sym,
-                'd_z_sym_err': diff_coeff_sym_err, 'R_z': resist,
-                'int_F_acf_vals': int_F_acf_vals, 'permeability': P}
+            'd_z_sym_err': diff_coeff_sym_err, 'R_z': resist,
+            'int_F_acf_vals': int_F_acf_vals, 'permeability': perm}
 
 
 def analyze_rotacf_data(path, n_sweeps=None, verbosity=1, directory_prefix='Sweep'):
