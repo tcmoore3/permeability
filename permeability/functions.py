@@ -65,12 +65,12 @@ def perm_coeff(z, resist, resist_err):
         Uncertainty in overall permeability of the bilayer
     """
     
-    P = 1 / (np.sum(resist) * (z[1] - z[0])*1e-8) # convert z from \AA to cm
-    P_err = 0 # implement
-
+    P = 1 / (np.sum(resist) * (z[1] - z[0]) * 1e-8) # convert z from \AA to cm
+    P_err = 1 / np.sqrt(np.sum(resist_err**2) * (z[1] - z[0]) * 1e-8)
+    
     print('Overall permeability: {P:.3e} [cm/s]'.format(**locals()))
-    print('WVTR: %f [g/m^2/hr]' % (3.6e7*P))
-
+    print('Error in permeability: {P_err:.3e} [cm/s]'.format(**locals()))
+    print('WVTR: %f [g/m^2/hr]' % (3.6e7 * P))
     return P, P_err
 
 def integrate_acf_over_time(filename, timestep=1.0, average_fraction=0.1):
@@ -429,8 +429,11 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
     dG_sym_err = np.std(dG_sym_all, axis=0) / np.sqrt(n_sweeps)
     
     resist_all = np.exp(dG_sym_all / (kB*T)) * int_facf_sym_all / RT2 
-    resist_err = np.std(resist_all, axis=0) / np.sqrt(n_sweeps) 
-    resist = np.exp(dG_sym / (kB*T)) / diffusion_coeff
+    #resist_err = np.std(resist_all, axis=0) / np.sqrt(n_sweeps) 
+    
+    expdGerr = np.exp(dG_sym / (kB*T)) * dG_sym_err / (kB*T) 
+    resist = np.exp(dG_sym / (kB*T)) / diff_coeff_sym
+    resist_err = resist * np.sqrt((expdGerr/np.exp(dG_sym / (kB*T)))**2+(diff_coeff_sym_err/diff_coeff_sym)**2) 
     
     perm, perm_err = perm_coeff(z_windows, resist, resist_err)
 

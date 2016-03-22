@@ -349,19 +349,15 @@ def plot_sym_exp_free_energy(z_windows, dG, dG_err, diffz, diffz_err,
     """
 
     fig, ax = plt.subplots()
-    
-
-    import pdb; pdb.set_trace()
-    
     ax.semilogy(z_windows, np.exp(dG/(kB*T))) # dimensionless
     ax.semilogy(z_windows, 1/diffz) # s/cm2 
     #ax.semilogy(z_windows, np.exp(delta_G/(kB*T))/diff_sym) # dimensionless
     #err = np.exp(delta_G) * delta_G_err
     #val = np.exp(delta_G)
-    ax.plot(z_windows, np.exp(dG/(kB*T))/diffz)
+    #ax.plot(z_windows, np.exp(dG/(kB*T))/diffz)
     line, = ax.plot(z_windows, resist)
     ax.fill_between(z_windows, resist+resist_err, 
-            resist-resist_err,
+            resist+resist_err,
             facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
     
     #ax.fill_between(z_windows, np.exp(delta_G), 
