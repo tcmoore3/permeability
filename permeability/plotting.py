@@ -178,14 +178,14 @@ def plot_resistance_z(z_windows, resist, z_units=u'\u00c5', Res_units=u's/cm\u00
     else:
         fig, ax = figax 
     
-    resist_mean = np.mean(resist, axis=0)
-    resist_err = np.std(resist, axis=0)/np.sqrt(resist.shape[0])
-    line, = ax.semilogy(z_windows, resist_mean, label=sys_name)
-    ax.fill_between(z_windows, resist_mean+resist_err, 
-            resist_mean-resist_err,
-            facecolor='#a8a8a8', edgecolor='#a8a8a8')
-    for resistsweep in resist:
-        ax.semilogy(z_windows, resistsweep, alpha=sweep_alpha, zorder=0)
+    #resist_mean = np.mean(resist, axis=0)
+    #resist_err = np.std(resist, axis=0)/np.sqrt(resist.shape[0])
+    line, = ax.semilogy(z_windows, resist, label=sys_name)
+    #ax.fill_between(z_windows, resist_mean+resist_err, 
+    #        resist_mean-resist_err,
+    #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
+    #for resistsweep in resist:
+    #    ax.semilogy(z_windows, resistsweep, alpha=sweep_alpha, zorder=0)
     ax.set_xlabel(u'z [{0}]'.format(z_units))
     ax.set_ylabel(u'R(z) [{0}]'.format(Res_units))
     ax.grid(grid)

@@ -66,7 +66,7 @@ def perm_coeff(z, resist, resist_err):
     """
     
     P = 1 / (np.sum(resist) * (z[1] - z[0]) * 1e-8) # convert z from \AA to cm
-    P_err = 1 / np.sqrt(np.sum(resist_err**2) * (z[1] - z[0]) * 1e-8)
+    P_err = np.sqrt(np.sum(resist_err**2) * (z[1] - z[0]) * 1e-8) * (P**2)
     
     print('Overall permeability: {P:.3e} [cm/s]'.format(**locals()))
     print('Error in permeability: {P_err:.3e} [cm/s]'.format(**locals()))
