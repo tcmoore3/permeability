@@ -166,9 +166,9 @@ def plot_int_acfs_time(time, int_facfs, time_units='ps', grid=True,
     fig.tight_layout()
     fig.savefig(fig_filename)
 
-def plot_resistance_z(z_windows, resist, 
-        z_units=u'\u00c5', Res_units=u's/cm\u00b2', fig_filename='res_z.pdf',
-        grid=True, sys_name=None, figax=(None,None), savefig=False, addlegend=False):
+def plot_resistance_z(z_windows, resist, z_units=u'\u00c5', Res_units=u's/cm\u00b2', 
+        fig_filename='res_z.pdf', grid=True, sys_name=None, figax=(None,None), 
+        sweep_alpha=0.5, savefig=False, addlegend=False):
     """Plot the diffusion coefficient as a function of z-position.
         Resistant input is in 1e-5 s/cm2
 
@@ -177,10 +177,15 @@ def plot_resistance_z(z_windows, resist,
         fig, ax = plt.subplots()
     else:
         fig, ax = figax 
-    line, = ax.semilogy(z_windows, resist, label=sys_name)
-    #ax.fill_between(z_windows, resist+resist_err, 
-    #        resist-resist_err,
-    #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
+    
+    resist_mean = np.mean(resist, axis=0)
+    resist_err = np.std(resist, axis=0)/np.sqrt(resist.shape[0])
+    line, = ax.semilogy(z_windows, resist_mean, label=sys_name)
+    ax.fill_between(z_windows, resist_mean+resist_err, 
+            resist_mean-resist_err,
+            facecolor='#a8a8a8', edgecolor='#a8a8a8')
+    for resistsweep in resist:
+        ax.semilogy(z_windows, resistsweep, alpha=sweep_alpha, zorder=0)
     ax.set_xlabel(u'z [{0}]'.format(z_units))
     ax.set_ylabel(u'R(z) [{0}]'.format(Res_units))
     ax.grid(grid)
@@ -303,7 +308,8 @@ def plot_symmetrized_free_energy(z_windows, delta_G, delta_G_err, z_units=u'\u00
     return fig, ax
 
 
-def plot_sym_exp_free_energy(z_windows, delta_G, delta_G_err, diff_sym, T, kB=1.9872041e-3, z_units=u'\u00c5',
+def plot_sym_exp_free_energy(z_windows, dG, dG_err, diffz, diffz_err,
+        resist, resist_err, T, kB=1.9872041e-3, z_units=u'\u00c5',
         fig_filename='expdelG-sym.pdf', grid=True, addlegend=False):
     """Plot symmetrized delta G
     
@@ -311,10 +317,22 @@ def plot_sym_exp_free_energy(z_windows, delta_G, delta_G_err, diff_sym, T, kB=1.
     ------
     z_windows : np.ndarray, shape=(n,)
         The location of the windows in z
-    delta_G : np.ndarray, shape=(n,)
+    dG : np.ndarray, shape=(n,)
         The symmetrized free energy profile, in energy units
-    delta_G_err : np.ndarray, shape=(n,)
+    dG_err : np.ndarray, shape=(n,)
         The error in the symmetrized free energy profile, in energy units
+    diffz : np.ndarray, shape=(n,)
+        The diffusion coefficient profile 
+    diffz_err : np.ndarray, shape=(n,)
+        The error in the diffusion profike 
+    resist : np.ndarray, shape=(n,)
+        The resistance profile
+    resist_err : np.ndarray, shape=(n,)
+        The error in the resistance profile
+    T : float
+        Temperature
+    kB : float
+        Boltzmann constant
     z_units : str
         The units of the z-values in z_windows
     energy_units : str
@@ -331,11 +349,21 @@ def plot_sym_exp_free_energy(z_windows, delta_G, delta_G_err, diff_sym, T, kB=1.
     """
 
     fig, ax = plt.subplots()
-    ax.semilogy(z_windows, np.exp(delta_G/(kB*T))) # dimensionless
-    ax.semilogy(z_windows, 1/diff_sym) # s/cm2 
-    ax.semilogy(z_windows, np.exp(delta_G/(kB*T))/diff_sym) # dimensionless
+    
+
+    import pdb; pdb.set_trace()
+    
+    ax.semilogy(z_windows, np.exp(dG/(kB*T))) # dimensionless
+    ax.semilogy(z_windows, 1/diffz) # s/cm2 
+    #ax.semilogy(z_windows, np.exp(delta_G/(kB*T))/diff_sym) # dimensionless
     #err = np.exp(delta_G) * delta_G_err
     #val = np.exp(delta_G)
+    ax.plot(z_windows, np.exp(dG/(kB*T))/diffz)
+    line, = ax.plot(z_windows, resist)
+    ax.fill_between(z_windows, resist+resist_err, 
+            resist-resist_err,
+            facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
+    
     #ax.fill_between(z_windows, np.exp(delta_G), 
     #        np.exp(delta_G-delta_G_err),
     #        facecolor='#a8a8a8', edgecolor='#a8a8a8')

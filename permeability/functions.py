@@ -45,7 +45,7 @@ def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     y = np.concatenate((firstvals, y, lastvals))
     return np.convolve(m[::-1], y, mode='valid')
 
-def perm_coeff(z, resist):
+def perm_coeff(z, resist, resist_err):
     """Calculate the overall permeability
     
     Params
@@ -54,17 +54,24 @@ def perm_coeff(z, resist):
         The position of each window in Angstroms
     resist : np.ndarray, shape=(n_windows,)
         The resistance in each window
+    resist_err : np.ndarray, shape=(n_windows,)
+        The uncertainty in resistance in each window
 
     Returns
     -------
     P : int
         Overall permeability of the bilayer
+    P_err : int
+        Uncertainty in overall permeability of the bilayer
     """
+    
     P = 1 / (np.sum(resist) * (z[1] - z[0])*1e-8) # convert z from \AA to cm
+    P_err = 0 # implement
+
     print('Overall permeability: {P:.3e} [cm/s]'.format(**locals()))
     print('WVTR: %f [g/m^2/hr]' % (3.6e7*P))
 
-    return P
+    return P, P_err
 
 def integrate_acf_over_time(filename, timestep=1.0, average_fraction=0.1):
     """Open a text file, integrate the forces
@@ -230,29 +237,6 @@ def rotacf(theta, funlen, dstart=2):
         origin += dstart
     return f1/ntraj
 
-def resistance(delG, diff_coeff, T, kB):
-    """Calculate the resistant profile of the sweep-averaged data 
-        Error estimates need to be added
-
-    Params
-    ------
-    delG : np.ndarray, shape=(n_windows,)
-        Excess free energy profile
-    diff_coeff : np.ndarray, shape=(n_windows,)
-        Diffusion coefficient profile
-    T : float
-        The absolute temperature
-    kB : float
-        Boltzmann constant, determines units (default is kcal/mol-K)
-    
-    Returns
-    -------
-    resist : np.ndarray, shape=(n_windows,)
-    """
-
-    resist = np.exp(delG/(kB*T))/diff_coeff 
-
-    return resist
     
 def force_timeseries(path, timestep=1.0, n_windows=None, start_window=0, n_sweeps=None, directory_prefix='Sweep'):
     """ Reading the raw data and plotting the sweep-averaged force time series for different windows
@@ -370,10 +354,14 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
             The error estimate on the diffusion coefficients from each window
         R_z : np.ndarray, shape=(n_windows,)
             Resistance in each window
+        R_z_err : np.ndarray, shape=(n_windows,)
+            Uncertainty of resistance in each window
         int_F_acf_vals : np.ndarray
             The integrals of the force autocorrelation functions
         permeability : float
             The global bilayer permeability
+        perm_err : float
+            The uncertainty in the permeability calculation
     This works under the assumption that the data for each sweep is listed in
     path/SweepN, where N is the sweep number.
     If n_.sweeps=None, then this function finds the number of sweeps.
@@ -429,20 +417,23 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
     dG_stderr = np.std(dG, axis=0) / np.sqrt(n_sweeps)
     
     diffusion_coeff = RT2 / np.mean(int_F_acf_vals, axis=0)
-    diffusion_coeff_err = np.std(RT2 * int_F_acf_vals, axis=0) / np.sqrt(n_sweeps)
+    diffusion_coeff_err = np.std(RT2 * int_F_acf_vals, axis=0) / np.sqrt(n_sweeps) # incorrect!
     #diff_coeff_sym, diff_coeff_sym_err = symmetrize(diffusion_coeff) 
    
-    diff_coeff_sym_all = symmetrize_each(int_F_acf_vals) 
-    diff_coeff_sym = RT2/np.mean(diff_coeff_sym_all, axis=0)
-    diff_coeff_sym_err = RT2*np.std(diff_coeff_sym_all, axis=0)/(np.mean(diff_coeff_sym_all, axis=0)**2)/np.sqrt(n_sweeps)
+    int_facf_sym_all = symmetrize_each(int_F_acf_vals) 
+    diff_coeff_sym = RT2/np.mean(int_facf_sym_all, axis=0)
+    diff_coeff_sym_err = RT2*np.std(int_facf_sym_all, axis=0) / (np.mean(int_facf_sym_all, axis=0)**2) / np.sqrt(n_sweeps)
      
     dG_sym_all = symmetrize_each(dG, zero_boundary_condition=True) 
     dG_sym = np.mean(dG_sym_all, axis=0)
     dG_sym_err = np.std(dG_sym_all, axis=0) / np.sqrt(n_sweeps)
     
-    resist = resistance(dG_sym, diff_coeff_sym, T, kB)
-    perm = perm_coeff(z_windows,resist)
+    resist_all = np.exp(dG_sym_all / (kB*T)) * int_facf_sym_all / RT2 
+    resist_err = np.std(resist_all, axis=0) / np.sqrt(n_sweeps) 
+    resist = np.exp(dG_sym / (kB*T)) / diffusion_coeff
     
+    perm, perm_err = perm_coeff(z_windows, resist, resist_err)
+
     #np.savetxt('dGmean.dat', np.vstack((z_windows, dGmeanSym)).T, fmt='%.4f')
     return {'z': z_windows, 'time': time, 'forces': forces, 'dG': dG,
             'int_facf_windows': int_facf_win, 'facf_windows': facf_win,
@@ -450,8 +441,10 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
             'dG_stderr': dG_stderr, 'd_z': diffusion_coeff, 
             'd_z_err': diffusion_coeff_err, 'dG_sym': dG_sym, 
             'dG_sym_err': dG_sym_err, 'd_z_sym': diff_coeff_sym,
-            'd_z_sym_err': diff_coeff_sym_err, 'R_z': resist,
-            'int_F_acf_vals': int_F_acf_vals, 'permeability': perm}
+            'd_z_sym_err': diff_coeff_sym_err, 
+            'R_z_all': resist_all, 'R_z': resist, 'R_z_err': resist_err,
+            'int_F_acf_vals': int_F_acf_vals, 
+            'permeability': perm,'perm_err': perm_err}
 
 
 def analyze_rotacf_data(path, n_sweeps=None, verbosity=1, directory_prefix='Sweep'):
