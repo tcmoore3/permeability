@@ -357,9 +357,11 @@ def plot_sym_exp_free_energy(z_windows, dG, dG_err, diffz, diffz_err,
     #ax.plot(z_windows, np.exp(dG/(kB*T))/diffz)
     line, = ax.plot(z_windows, resist)
     ax.fill_between(z_windows, resist+resist_err, 
-            resist+resist_err,
+            resist-resist_err,
             facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
     
+    
+    #print(resist-resist_err, resist, resist_err) 
     #ax.fill_between(z_windows, np.exp(delta_G), 
     #        np.exp(delta_G-delta_G_err),
     #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
