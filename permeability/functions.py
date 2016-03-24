@@ -418,7 +418,6 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
     
     diffusion_coeff = RT2 / np.mean(int_F_acf_vals, axis=0)
     diffusion_coeff_err = np.std(RT2 * int_F_acf_vals, axis=0) / np.sqrt(n_sweeps) # incorrect!
-    #diff_coeff_sym, diff_coeff_sym_err = symmetrize(diffusion_coeff) 
    
     int_facf_sym_all = symmetrize_each(int_F_acf_vals) 
     diff_coeff_sym = RT2/np.mean(int_facf_sym_all, axis=0)
@@ -426,11 +425,9 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
      
     dG_sym_all = symmetrize_each(dG, zero_boundary_condition=True) 
     dG_sym = np.mean(dG_sym_all, axis=0)
-    #dG_sym = -np.log(np.mean(np.exp(-dG_sym_all / (kB*T)), axis=0))*kB*T
     dG_sym_err = np.std(dG_sym_all, axis=0) / np.sqrt(n_sweeps)
     
     resist_all = np.exp(dG_sym_all / (kB*T)) * int_facf_sym_all / RT2 
-    #resist_err = np.std(resist_all, axis=0) / np.sqrt(n_sweeps) 
     
     expdGerr = np.exp(dG_sym / (kB*T)) * dG_sym_err / (kB*T) 
     resist = np.exp(dG_sym / (kB*T)) / diff_coeff_sym

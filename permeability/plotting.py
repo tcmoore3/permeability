@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 from permeability.functions import savitzky_golay 
+from matplotlib.ticker import LogLocator, MultipleLocator, FormatStrFormatter
+from matplotlib.ticker import LogFormatter
 import numpy as np
 import pdb
 
@@ -43,8 +45,8 @@ def plot_forces(z_windows, forces, fig_filename='forces.pdf',
                 facecolor='#a8a8a8', edgecolor='#a8a8a8')
     for force_series in forces:
         ax.plot(z_windows, force_series, alpha=sweep_alpha, zorder=0)
-    ax.set_xlabel(u'z [{z_units}]'.format(**locals()))
-    ax.set_ylabel(u'F(z) [{force_units}]'.format(**locals()))
+    ax.set_xlabel(u'z [{z_units}]'.format(**locals()), fontweight='bold')
+    ax.set_ylabel(u'F(z) [{force_units}]'.format(**locals()), fontweight='bold')
     ax.grid(grid)
     zmin = z_windows[0]    
     plt.xlim(zmin,-zmin)
@@ -94,8 +96,8 @@ def plot_free_energy_z(z_windows, free_energy, fig_filename='delta_G.pdf',
                 facecolor='#a8a8a8', edgecolor='#a8a8a8')
     for free_energy_series in free_energy:
         ax.plot(z_windows, free_energy_series, alpha=sweep_alpha, zorder=0)
-    ax.set_xlabel(u'z [{z_units}]'.format(**locals()))
-    ax.set_ylabel(u'\u0394G(z) [{energy_units}]'.format(**locals()))
+    ax.set_xlabel(u'z [{z_units}]'.format(**locals()), fontweight='bold')
+    ax.set_ylabel(u'\u0394G(z) [{energy_units}]'.format(**locals()), fontweight='bold')
     ax.grid(grid)
     zmin = z_windows[0]    
     plt.xlim(zmin,-zmin)
@@ -112,8 +114,8 @@ def plot_timeseries(time, forces, time_units='ps', force_units=u'kcal/mol-\u00c5
         ax.plot(time, force_series,zorder=0)
         smoothdata = savitzky_golay(force_series, 15001, 3)
         ax.plot(time, smoothdata)
-    ax.set_xlabel(u'time [{time_units}]'.format(**locals()))
-    ax.set_ylabel(u'F_z(z) [{force_units}]'.format(**locals()))
+    ax.set_xlabel(u'time [{time_units}]'.format(**locals()), fontweight='bold')
+    ax.set_ylabel(u'F_z(z) [{force_units}]'.format(**locals()), fontweight='bold')
     ax.grid(grid,color='c')
     ax.tick_params(axis='both', which='major', pad=8)
     fig.tight_layout()
@@ -128,8 +130,8 @@ def plot_rot_acfs_time(time, racfs, time_units='ps', normalize=True, grid=True,
             racf /= racf[0]
         if np.mod(i,2)==0: # just to make the graph less crowded
             ax.plot(time, racf)      
-    ax.set_xlabel('t [{0}]'.format(time_units))
-    ax.set_ylabel(r'$\langle\Theta$(t)$\Theta$(0)$\rangle$')
+    ax.set_xlabel('t [{0}]'.format(time_units), fontweight='bold')
+    ax.set_ylabel(r'$\langle\Theta$(t)$\Theta$(0)$\rangle$', fontweight='bold')
     plt.xlim(time[0],time[-1])
     ax.grid(grid)
     ax.tick_params(axis='both', which='major', pad=8)
@@ -144,8 +146,8 @@ def plot_force_acfs_time(time, facfs, time_units='ps', normalize=True, grid=True
             facf /= facf[0]
         if np.mod(i,2)==0: # just to make the graph less crowded
             ax.semilogx(time, facf)      
-    ax.set_xlabel('t [{0}]'.format(time_units))
-    ax.set_ylabel(r'$\langle\Delta$F(t)$\Delta$F(0)$\rangle$')
+    ax.set_xlabel('t [{0}]'.format(time_units), fontweight='bold')
+    ax.set_ylabel(r'$\langle\Delta$F(t)$\Delta$F(0)$\rangle$', fontweight='bold')
     plt.xlim(time[0],time[-1])
     ax.grid(grid)
     ax.tick_params(axis='both', which='major', pad=8)
@@ -158,8 +160,8 @@ def plot_int_acfs_time(time, int_facfs, time_units='ps', grid=True,
     for i, int_facf in enumerate(int_facfs):
         if np.mod(i,2)==0: # just to make the graph less crowded
             ax.loglog(time, int_facf)      
-    ax.set_xlabel('t [{0}]'.format(time_units))
-    ax.set_ylabel(r"$\int_0^t\langle\Delta$F(t')$\Delta$F(0)$\rangle$dt'")
+    ax.set_xlabel('t [{0}]'.format(time_units), fontweight='bold')
+    ax.set_ylabel(r"$\int_0^t\langle\Delta$F(t')$\Delta$F(0)$\rangle$dt'", fontweight='bold')
     plt.xlim(time[0],time[-1])
     ax.grid(grid)
     ax.tick_params(axis='both', which='major', pad=8)
@@ -186,12 +188,14 @@ def plot_resistance_z(z_windows, resist, z_units=u'\u00c5', Res_units=u's/cm\u00
     #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
     #for resistsweep in resist:
     #    ax.semilogy(z_windows, resistsweep, alpha=sweep_alpha, zorder=0)
-    ax.set_xlabel(u'z [{0}]'.format(z_units))
-    ax.set_ylabel(u'R(z) [{0}]'.format(Res_units))
+    ax.set_xlabel(u'z [{0}]'.format(z_units), fontweight='bold')
+    ax.set_ylabel(u'R(z) [{0}]'.format(Res_units), fontweight='bold')
     ax.grid(grid)
     zmin = z_windows[0]    
     plt.xlim(zmin,-zmin)
     ax.tick_params(axis='both', which='major', pad=8)
+    for label in ax.get_yticklabels()[::2]:
+        label.set_visible(False)
     if addlegend:
         ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
                ncol=2, mode="expand", borderaxespad=0., fontsize='medium')
@@ -214,8 +218,8 @@ def plot_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff_err
     ax.fill_between(z_windows, diffusion_coeff+diffusion_coeff_err, 
             diffusion_coeff-diffusion_coeff_err,
             facecolor='#a8a8a8', edgecolor='#a8a8a8')
-    ax.set_xlabel(u'z [{0}]'.format(z_units))
-    ax.set_ylabel(u'D(z) [{0}]'.format(D_units))
+    ax.set_xlabel(u'z [{0}]'.format(z_units), fontweight='bold')
+    ax.set_ylabel(u'D(z) [{0}]'.format(D_units), fontweight='bold')
     plt.ylim(0,3e-4)
     plt.xlim(zmin,-zmin)
     ax.tick_params(axis='both', which='major', pad=8)
@@ -240,8 +244,8 @@ def plot_sym_diffusion_coefficient_z(z_windows, diffusion_coeff, diffusion_coeff
     ax.fill_between(z_windows, diffusion_coeff+diffusion_coeff_err, 
             diffusion_coeff-diffusion_coeff_err,
             facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
-    ax.set_xlabel(u'z [{0}]'.format(z_units))
-    ax.set_ylabel(u'D(z) [{0}]'.format(D_units))
+    ax.set_xlabel(u'z [{0}]'.format(z_units), fontweight='bold')
+    ax.set_ylabel(u'D(z) [{0}]'.format(D_units), fontweight='bold')
     if addlegend:
         ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
                ncol=2, mode="expand", borderaxespad=0., fontsize='medium')
@@ -291,8 +295,8 @@ def plot_symmetrized_free_energy(z_windows, delta_G, delta_G_err, z_units=u'\u00
     ax.fill_between(z_windows, delta_G+delta_G_err, 
             delta_G-delta_G_err,
             facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
-    ax.set_xlabel(u'z [{0}]'.format(z_units))
-    ax.set_ylabel(u'\u0394G(z) [{0}]'.format(energy_units))
+    ax.set_xlabel(u'z [{0}]'.format(z_units), fontweight='bold')
+    ax.set_ylabel(u'\u0394G(z) [{0}]'.format(energy_units), fontweight='bold')
     ax.grid(grid)
     if addlegend:
         ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
@@ -356,20 +360,23 @@ def plot_sym_exp_free_energy(z_windows, dG, dG_err, diffz, diffz_err,
     #val = np.exp(delta_G)
     #ax.plot(z_windows, np.exp(dG/(kB*T))/diffz)
     line, = ax.plot(z_windows, resist)
-    ax.fill_between(z_windows, resist+resist_err, 
-            resist-resist_err,
-            facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
+    #ax.fill_between(z_windows, resist+resist_err, 
+    #        resist-resist_err,
+    #        facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
     
     
     #print(resist-resist_err, resist, resist_err) 
     #ax.fill_between(z_windows, np.exp(delta_G), 
     #        np.exp(delta_G-delta_G_err),
     #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
-    ax.set_xlabel(u'z [{0}]'.format(z_units))
-    ax.set_ylabel(u'1/D, exp(beta G)')
+    ax.set_xlabel(u'z [{0}]'.format(z_units), fontweight='bold')
+    ax.set_ylabel(u'1/D, exp(beta G)', fontweight='bold')
     ax.grid(grid)
     zmin = z_windows[0]    
     plt.xlim(zmin,-zmin)
     ax.tick_params(axis='both', which='major', pad=8)
+    for label in ax.get_yticklabels()[::2]:
+        label.set_visible(False)
+
     fig.tight_layout()
     fig.savefig(fig_filename)
