@@ -5,6 +5,9 @@ from matplotlib.ticker import LogFormatter
 import numpy as np
 import pdb
 
+#import matplotlib
+#matplotlib.rc('font', family='Arial')
+
 def plot_forces(z_windows, forces, fig_filename='forces.pdf',
         z_units=u'\u00c5', force_units=u'kcal/mol-\u00c5', plot_mean=True,
         sweep_alpha=0.5, grid=True):
@@ -352,17 +355,35 @@ def plot_sym_exp_free_energy(z_windows, dG, dG_err, diffz, diffz_err,
     and saves it to disk.
     """
 
+
+    # purely for testing purposes:
+    #resist_err *=0.9
+    #dG_err *= 0.9
+
+
     fig, ax = plt.subplots()
-    ax.semilogy(z_windows, np.exp(dG/(kB*T))) # dimensionless
-    ax.semilogy(z_windows, 1/diffz) # s/cm2 
+    expdG = np.exp(dG/(kB*T))
+    expdGerr = np.exp(dG / (kB*T)) * dG_err / (kB*T) 
+    line, = ax.semilogy(z_windows, expdG, label=u'exp(\u03B2\u0394G(z))') # dimensionless
+    ax.fill_between(z_windows, expdG+expdGerr, 
+            expdG-expdGerr,
+            facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
+    invdiffz = 1/diffz
+    invdifferr = diffz_err/(diffz**2) 
+    line, = ax.semilogy(z_windows, invdiffz, label='D(z)$^{-1}$') # s/cm2  \u207b\u00b9
+    ax.fill_between(z_windows, invdiffz+invdifferr, 
+            invdiffz-invdifferr,
+            facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
+    
+    
     #ax.semilogy(z_windows, np.exp(delta_G/(kB*T))/diff_sym) # dimensionless
     #err = np.exp(delta_G) * delta_G_err
     #val = np.exp(delta_G)
     #ax.plot(z_windows, np.exp(dG/(kB*T))/diffz)
-    line, = ax.plot(z_windows, resist)
-    #ax.fill_between(z_windows, resist+resist_err, 
-    #        resist-resist_err,
-    #        facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
+    line, = ax.plot(z_windows, resist, label='R(z)')
+    ax.fill_between(z_windows, resist+resist_err, 
+            resist-resist_err,
+            facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
     
     
     #print(resist-resist_err, resist, resist_err) 
@@ -370,13 +391,16 @@ def plot_sym_exp_free_energy(z_windows, dG, dG_err, diffz, diffz_err,
     #        np.exp(delta_G-delta_G_err),
     #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
     ax.set_xlabel(u'z [{0}]'.format(z_units), fontweight='bold')
-    ax.set_ylabel(u'1/D, exp(beta G)', fontweight='bold')
+    #ax.set_ylabel(u'1/D(z), exp(\u03B2G(z))', fontweight='bold')
     ax.grid(grid)
     zmin = z_windows[0]    
     plt.xlim(zmin,-zmin)
     ax.tick_params(axis='both', which='major', pad=8)
     for label in ax.get_yticklabels()[::2]:
         label.set_visible(False)
+    l = ax.legend(loc=8,fontsize='medium')
+    for text in l.get_texts():
+        text.set_family('Arial')
 
     fig.tight_layout()
     fig.savefig(fig_filename)

@@ -66,10 +66,13 @@ def perm_coeff(z, resist, resist_err):
     """
     
     P = 1 / (np.sum(resist) * (z[1] - z[0]) * 1e-8) # convert z from \AA to cm
-    P_err = np.sqrt(np.sum(resist_err**2) * (z[1] - z[0]) * 1e-8) * (P**2)
+    #P_err = np.sqrt(np.sum(resist_err**2) * (z[1] - z[0]) * 1e-8) * (P**2)
     
+    R_err_global = np.sqrt(np.sum(resist_err**2) * (z[1] - z[0])) * 1e-8 # s/cm
+    P_err = R_err_global * (P**2)
+
     print('Overall permeability: {P:.3e} [cm/s]'.format(**locals()))
-    #print('Error in permeability: {P_err:.3e} [cm/s]'.format(**locals()))
+    print('Error in permeability: {P_err:.3e} [cm/s]'.format(**locals()))
     print('WVTR: %f [g/m^2/hr]' % (3.6e7 * P))
     return P, P_err
 
@@ -234,6 +237,7 @@ def rotacf(theta, funlen, dstart=2):
         fzt = theta[origin:origin+funlen]
         fz0 = theta[origin];
         f1 += fzt*fz0
+    
         origin += dstart
     return f1/ntraj
 
