@@ -100,7 +100,7 @@ def plot_free_energy_z(z_windows, free_energy, fig_filename='delta_G.pdf',
     for free_energy_series in free_energy:
         ax.plot(z_windows, free_energy_series, alpha=sweep_alpha, zorder=0)
     ax.set_xlabel(u'z [{z_units}]'.format(**locals()), fontweight='bold')
-    ax.set_ylabel(u'\u0394G(z) [{energy_units}]'.format(**locals()), fontweight='bold')
+    ax.set_ylabel(u'$\Delta$G(z) [{energy_units}]'.format(**locals()), fontweight='bold')
     ax.grid(grid)
     zmin = z_windows[0]    
     plt.xlim(zmin,-zmin)
@@ -171,7 +171,7 @@ def plot_int_acfs_time(time, int_facfs, time_units='ps', grid=True,
     fig.tight_layout()
     fig.savefig(fig_filename)
 
-def plot_resistance_z(z_windows, resist, z_units=u'\u00c5', Res_units=u's/cm\u00b2', 
+def plot_resistance_z(z_windows, resist, resist_err, z_units=u'\u00c5', Res_units=u's/cm\u00b2', 
         fig_filename='res_z.pdf', grid=True, sys_name=None, figax=(None,None), 
         sweep_alpha=0.5, savefig=False, addlegend=False):
     """Plot the diffusion coefficient as a function of z-position.
@@ -183,14 +183,12 @@ def plot_resistance_z(z_windows, resist, z_units=u'\u00c5', Res_units=u's/cm\u00
     else:
         fig, ax = figax 
     
-    #resist_mean = np.mean(resist, axis=0)
-    #resist_err = np.std(resist, axis=0)/np.sqrt(resist.shape[0])
-    line, = ax.semilogy(z_windows, resist, label=sys_name)
-    #ax.fill_between(z_windows, resist_mean+resist_err, 
-    #        resist_mean-resist_err,
-    #        facecolor='#a8a8a8', edgecolor='#a8a8a8')
-    #for resistsweep in resist:
-    #    ax.semilogy(z_windows, resistsweep, alpha=sweep_alpha, zorder=0)
+    line, = ax.plot(z_windows, resist, label=sys_name)
+    #line, = ax.semilogy(z_windows, resist, label=sys_name)
+    #resist_err *= 0.85
+    #ax.fill_between(z_windows, resist+resist_err, 
+    #        resist-resist_err,
+    #        facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
     ax.set_xlabel(u'z [{0}]'.format(z_units), fontweight='bold')
     ax.set_ylabel(u'R(z) [{0}]'.format(Res_units), fontweight='bold')
     ax.grid(grid)
@@ -299,7 +297,7 @@ def plot_symmetrized_free_energy(z_windows, delta_G, delta_G_err, z_units=u'\u00
             delta_G-delta_G_err,
             facecolor=line.get_color(), edgecolor=line.get_color(), alpha=0.2)
     ax.set_xlabel(u'z [{0}]'.format(z_units), fontweight='bold')
-    ax.set_ylabel(u'\u0394G(z) [{0}]'.format(energy_units), fontweight='bold')
+    ax.set_ylabel(u'$\Delta$G(z) [{0}]'.format(energy_units), fontweight='bold')
     ax.grid(grid)
     if addlegend:
         ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,

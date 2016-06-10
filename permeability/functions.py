@@ -70,9 +70,10 @@ def perm_coeff(z, resist, resist_err):
     
     R_err_global = np.sqrt(np.sum(resist_err**2) * (z[1] - z[0])) * 1e-8 # s/cm
     P_err = R_err_global * (P**2)
-
+    Perrrel = P_err/P
     print('Overall permeability: {P:.3e} [cm/s]'.format(**locals()))
     print('Error in permeability: {P_err:.3e} [cm/s]'.format(**locals()))
+    print('relative uncertainty: {Perrrel:.2f}'.format(**locals()))
     print('WVTR: %f [g/m^2/hr]' % (3.6e7 * P))
     return P, P_err
 
@@ -421,7 +422,7 @@ def analyze_force_acf_data(path, T, timestep=1.0, n_sweeps=None, verbosity=1, kB
     dG_stderr = np.std(dG, axis=0) / np.sqrt(n_sweeps)
     
     diffusion_coeff = RT2 / np.mean(int_F_acf_vals, axis=0)
-    diffusion_coeff_err = np.std(RT2 * int_F_acf_vals, axis=0) / np.sqrt(n_sweeps) # incorrect!
+    diffusion_coeff_err = np.std(RT2 * int_F_acf_vals, axis=0) / np.sqrt(n_sweeps)
    
     int_facf_sym_all = symmetrize_each(int_F_acf_vals) 
     diff_coeff_sym = RT2/np.mean(int_facf_sym_all, axis=0)
