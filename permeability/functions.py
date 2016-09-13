@@ -66,7 +66,6 @@ def perm_coeff(z, resist, resist_err):
     """
     
     P = 1 / (np.sum(resist) * (z[1] - z[0]) * 1e-8) # convert z from \AA to cm
-    #P_err = np.sqrt(np.sum(resist_err**2) * (z[1] - z[0]) * 1e-8) * (P**2)
     
     R_err_global = np.sqrt(np.sum(resist_err**2) * (z[1] - z[0])) * 1e-8 # s/cm
     P_err = R_err_global * (P**2)
